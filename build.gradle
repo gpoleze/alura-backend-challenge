@@ -26,7 +26,8 @@ test {
 }
 
 flyway {
-    url = '$System.env.FLYWAY_URL'
-    user = '$System.env.FLYWAY_USER'
-    password = '$System.env.FLYWAY_PASSWORD'
+    url = System.getenv('DB_URL')
+    user = System.getenv('DB_USERNAME')
+    password = System.getenv('DB_PASSWORD')
+    driver = 'org.postgresql.Driver'
 }
