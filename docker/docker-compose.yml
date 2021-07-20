@@ -1,0 +1,13 @@
+version: "3"
+
+services:
+  postgres:
+    image: postgres
+    volumes:
+      - "./data:/var/lib/postgresql/data"
+    environment:
+      POSTGRES_DB: alurapix-dev
+      POSTGRES_PASSWORD: local_dev
+      POSTGRES_USER: local_dev
+    ports:
+      - "5432:5432"
