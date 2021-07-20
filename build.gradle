@@ -13,8 +13,6 @@ repositories {
     mavenCentral()
 }
 
-
-
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -28,7 +26,7 @@ test {
 }
 
 flyway {
-    url = 'jdbc:postgresql://localhost:5432/alurapix-dev'
-    user = 'local_dev'
-    password = 'local_dev'
+    url = '$System.env.FLYWAY_URL'
+    user = '$System.env.FLYWAY_USER'
+    password = '$System.env.FLYWAY_PASSWORD'
 }
