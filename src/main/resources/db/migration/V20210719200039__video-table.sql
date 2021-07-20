@@ -4,5 +4,5 @@ CREATE TABLE IF NOT EXISTS video (
     id UUID PRIMARY KEY UNIQUE,
     title VARCHAR(256) NOT NULL,
     url VARCHAR NOT NULL,
-    desciption VARCHAR
+    description VARCHAR
 );
