@@ -1,17 +1,14 @@
 package com.gabrielpf.alurabackendchallange.model;
 
-import java.util.UUID;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.Id;
+
+import com.gabrielpf.alurabackendchallange.vo.in.VideosVoIn;
 
 @Entity
-public class Video {
-    @Id
-    private UUID id;
+public class Video extends EntityWithUuidId {
 
-    @Column(nullable = false, length = 256)
+    @Column(unique = true, nullable = false, length = 256)
     private String title;
 
     @Column
@@ -22,12 +19,10 @@ public class Video {
 
     protected Video() {}
 
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
+    public Video(VideosVoIn in) {
+        this.description = in.getDescription();
+        this.url = in.getUrl();
+        this.title = in.getTitle();
     }
 
     public String getTitle() {

@@ -1,4 +1,4 @@
-package com.gabrielpf.alurabackendchallange.controller;
+package com.gabrielpf.alurabackendchallange.vo.out;
 
 import java.util.UUID;
 
