@@ -1,10 +1,12 @@
 package com.gabrielpf.alurabackendchallange.controller;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import javax.validation.Valid;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,10 +34,13 @@ public class VideoController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<VideosVoOut> getOne(@PathVariable("id") UUID id) {
-        return videoService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity getOne(@PathVariable("id") UUID id) {
+        Optional<VideosVoOut> voOut = videoService.findById(id);
+
+        if (voOut.isPresent())
+            return ResponseEntity.ok(voOut);
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not Found");
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
