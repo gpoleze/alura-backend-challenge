@@ -1,5 +1,6 @@
 package com.gabrielpf.alurabackendchallange.controller;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.gabrielpf.alurabackendchallange.service.VideoService;
 import com.gabrielpf.alurabackendchallange.vo.in.VideosVoIn;
@@ -44,8 +46,11 @@ public class VideoController {
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public VideosVoOut create(@Valid @RequestBody VideosVoIn videosVoIn) {
-        return videoService.save(videosVoIn);
+    public ResponseEntity<VideosVoOut> create(@Valid @RequestBody VideosVoIn videosVoIn, UriComponentsBuilder uriBuilder) {
+        var videosVoOut = videoService.save(videosVoIn);
+
+        final URI uri = uriBuilder.path("/videos/{id}").buildAndExpand(videosVoOut.getId()).toUri();
+        return ResponseEntity.created(uri).body(videosVoOut);
     }
 
 }
