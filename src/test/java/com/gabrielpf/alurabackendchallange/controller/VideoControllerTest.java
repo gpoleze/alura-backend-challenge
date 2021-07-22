@@ -28,11 +28,14 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.MessageSource;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import com.gabrielpf.alurabackendchallange.exception.DataAlreadyExistsException;
+import com.gabrielpf.alurabackendchallange.handler.ValidationErrorHandler;
 import com.gabrielpf.alurabackendchallange.model.Video;
 import com.gabrielpf.alurabackendchallange.service.VideoService;
 import com.gabrielpf.alurabackendchallange.vo.in.VideosVoIn;
@@ -123,14 +126,9 @@ class VideoControllerTest {
 
         when(videoService.save(any())).thenReturn(videoVoOut);
 
-        Map<String, String> content = new HashMap<>();
-        content.put("title", title);
-        content.put("description", description);
-        content.put("url", url);
-
         MockHttpServletRequestBuilder request = post("/videos")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(gson.toJson(content).getBytes());
+                .content(getBody(title, description, url));
 
         mockMvc
                 .perform(request)
@@ -138,6 +136,14 @@ class VideoControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(content().json(gson.toJson(videoVoOut)))
                 .andExpect(redirectedUrl("http://localhost/videos/" + videoVoOut.getId()));
+    }
+
+    private byte[] getBody(String title, String description, String url) {
+        Map<String, String> content = new HashMap<>();
+        content.put("title", title);
+        content.put("description", description);
+        content.put("url", url);
+        return new Gson().toJson(content).getBytes();
     }
 
 
@@ -172,5 +178,29 @@ class VideoControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(videoService, times(0)).save(any());
+    }
+
+    @Test
+    void returnBadRequestWhenBodyArgumentsAreValidButTitleAlreadyExists() throws Exception {
+        String title = "title";
+        String description = "desc";
+        String url = "url";
+        var gson = new Gson();
+
+        VideosVoIn videoVoIn = new VideosVoIn(description, title, url);
+        Video video = videoVoIn.convert();
+        VideosVoOut videoVoOut = new VideosVoOut(video);
+
+        when(videoService.save(any(VideosVoIn.class))).thenThrow(new DataAlreadyExistsException(VideosVoIn.class, "title"));
+
+        MockHttpServletRequestBuilder request = post("/videos")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(getBody(title, description, url));
+
+
+        mockMvc.perform(request)
+                .andExpect(status().isBadRequest())
+                .andExpect(content().json("{\"field\":\"title\", \"error\":\"The given value is already present in the database\"}"))
+                .andDo(print());
     }
 }

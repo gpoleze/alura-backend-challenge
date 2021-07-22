@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.gabrielpf.alurabackendchallange.exception.DataAlreadyExistsException;
+
 @RestControllerAdvice
 public class ValidationErrorHandler {
 
@@ -34,5 +36,11 @@ public class ValidationErrorHandler {
                     return new FormErrorDto(fieldError.getField(), mensage);
                 })
                 .collect(Collectors.toList());
+    }
+
+    @ResponseStatus(code = HttpStatus.BAD_REQUEST)
+    @ExceptionHandler({DataAlreadyExistsException.class})
+    public FormErrorDto handle(DataAlreadyExistsException exception) {
+        return new FormErrorDto(exception.getFieldError().getField(),exception.getMessage());
     }
 }

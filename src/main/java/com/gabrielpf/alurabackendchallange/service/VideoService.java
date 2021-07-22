@@ -5,7 +5,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.validation.FieldError;
 
+import com.gabrielpf.alurabackendchallange.exception.DataAlreadyExistsException;
 import com.gabrielpf.alurabackendchallange.repository.VideoRepository;
 import com.gabrielpf.alurabackendchallange.vo.in.VideosVoIn;
 import com.gabrielpf.alurabackendchallange.vo.out.VideosVoOut;
@@ -18,6 +20,9 @@ public class VideoService {
     public VideoService(VideoRepository videoRepo) {this.videoRepo = videoRepo;}
 
     public VideosVoOut save(VideosVoIn videosVoIn) {
+        if (videoRepo.findByTitle(videosVoIn.getTitle()).isPresent())
+            throw new DataAlreadyExistsException(VideosVoIn.class, "title");
+
         var video = videosVoIn.convert();
         var savedVideo = videoRepo.save(video);
         return new VideosVoOut(savedVideo);
