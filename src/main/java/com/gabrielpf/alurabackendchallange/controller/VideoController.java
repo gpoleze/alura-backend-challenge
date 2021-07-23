@@ -23,7 +23,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.gabrielpf.alurabackendchallange.controller.form.VideoCreateForm;
 import com.gabrielpf.alurabackendchallange.controller.form.VideoUpdateForm;
 import com.gabrielpf.alurabackendchallange.service.VideoService;
-import com.gabrielpf.alurabackendchallange.vo.out.VideosVoOut;
+import com.gabrielpf.alurabackendchallange.dto.VideoDto;
 
 @RestController
 @RequestMapping(value = "videos", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -34,13 +34,13 @@ public class VideoController {
     public VideoController(VideoService videoService) {this.videoService = videoService;}
 
     @GetMapping
-    public List<VideosVoOut> list() {
+    public List<VideoDto> list() {
         return videoService.findAll();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity getOne(@PathVariable("id") UUID id) {
-        Optional<VideosVoOut> voOut = videoService.findById(id);
+        Optional<VideoDto> voOut = videoService.findById(id);
 
         if (voOut.isPresent())
             return ResponseEntity.ok(voOut);
@@ -49,7 +49,7 @@ public class VideoController {
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<VideosVoOut> create(@Valid @RequestBody VideoCreateForm videoCreateForm, UriComponentsBuilder uriBuilder) {
+    public ResponseEntity<VideoDto> create(@Valid @RequestBody VideoCreateForm videoCreateForm, UriComponentsBuilder uriBuilder) {
         var videosVoOut = videoService.save(videoCreateForm);
 
         final URI uri = uriBuilder.path("/videos/{id}").buildAndExpand(videosVoOut.getId()).toUri();
@@ -68,7 +68,7 @@ public class VideoController {
             return getOne(id);
 
 
-        Optional<VideosVoOut> optionalVideosVoOut = videoService.update(id, videoUpdateForm);
+        Optional<VideoDto> optionalVideosVoOut = videoService.update(id, videoUpdateForm);
         if (optionalVideosVoOut.isPresent())
             return ResponseEntity.ok(optionalVideosVoOut.get());
         return ResponseEntity.noContent().build();

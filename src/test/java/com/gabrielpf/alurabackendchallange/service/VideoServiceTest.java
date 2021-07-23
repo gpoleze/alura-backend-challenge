@@ -14,7 +14,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import com.gabrielpf.alurabackendchallange.model.Video;
 import com.gabrielpf.alurabackendchallange.repository.VideoRepository;
 import com.gabrielpf.alurabackendchallange.controller.form.VideoCreateForm;
-import com.gabrielpf.alurabackendchallange.vo.out.VideosVoOut;
+import com.gabrielpf.alurabackendchallange.dto.VideoDto;
 
 @SpringBootTest(classes = {VideoService.class})
 class VideoServiceTest {
@@ -29,8 +29,8 @@ class VideoServiceTest {
         return new VideoCreateForm("my description", "my tile", "example.com/video");
     }
 
-    private VideosVoOut getVideoVoOut() {
-        return new VideosVoOut(getVideoVoIn().convert());
+    private VideoDto getVideoVoOut() {
+        return new VideoDto(getVideoVoIn().convert());
     }
 
     @Test

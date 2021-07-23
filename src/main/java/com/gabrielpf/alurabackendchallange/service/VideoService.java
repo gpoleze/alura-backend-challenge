@@ -11,7 +11,7 @@ import com.gabrielpf.alurabackendchallange.exception.DataAlreadyExistsException;
 import com.gabrielpf.alurabackendchallange.model.Video;
 import com.gabrielpf.alurabackendchallange.repository.VideoRepository;
 import com.gabrielpf.alurabackendchallange.controller.form.VideoCreateForm;
-import com.gabrielpf.alurabackendchallange.vo.out.VideosVoOut;
+import com.gabrielpf.alurabackendchallange.dto.VideoDto;
 
 @Service
 public class VideoService {
@@ -20,27 +20,27 @@ public class VideoService {
 
     public VideoService(VideoRepository videoRepo) {this.videoRepo = videoRepo;}
 
-    public VideosVoOut save(VideoCreateForm videoCreateForm) {
+    public VideoDto save(VideoCreateForm videoCreateForm) {
         if (videoRepo.findByTitle(videoCreateForm.getTitle()).isPresent())
             throw new DataAlreadyExistsException(VideoCreateForm.class, "title");
 
         var video = videoCreateForm.convert();
         var savedVideo = videoRepo.save(video);
-        return new VideosVoOut(savedVideo);
+        return new VideoDto(savedVideo);
     }
 
-    public List<VideosVoOut> findAll() {
+    public List<VideoDto> findAll() {
         return videoRepo
                 .findAll()
                 .stream()
-                .map(VideosVoOut::new)
+                .map(VideoDto::new)
                 .toList();
     }
 
-    public Optional<VideosVoOut> findById(UUID id) {
+    public Optional<VideoDto> findById(UUID id) {
         return videoRepo
                 .findById(id)
-                .map(VideosVoOut::new);
+                .map(VideoDto::new);
     }
 
     public void delete(UUID id) {
@@ -49,14 +49,14 @@ public class VideoService {
                 .ifPresent(videoRepo::delete);
     }
 
-    public Optional<VideosVoOut> update(UUID id, VideoUpdateForm videoUpdateForm) {
+    public Optional<VideoDto> update(UUID id, VideoUpdateForm videoUpdateForm) {
 
         Optional<Video> videoOptional = videoRepo.findById(id);
 
         if(videoOptional.isPresent()) {
             Video updatedVideo = videoUpdateForm.update(videoOptional.get());
             videoRepo.save(updatedVideo);
-            return Optional.of(new VideosVoOut(updatedVideo));
+            return Optional.of(new VideoDto(updatedVideo));
         }
 
         return Optional.empty();

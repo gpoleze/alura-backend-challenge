@@ -43,10 +43,10 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 
 import com.gabrielpf.alurabackendchallange.controller.form.VideoCreateForm;
 import com.gabrielpf.alurabackendchallange.controller.form.VideoUpdateForm;
+import com.gabrielpf.alurabackendchallange.dto.VideoDto;
 import com.gabrielpf.alurabackendchallange.exception.DataAlreadyExistsException;
 import com.gabrielpf.alurabackendchallange.model.Video;
 import com.gabrielpf.alurabackendchallange.service.VideoService;
-import com.gabrielpf.alurabackendchallange.vo.out.VideosVoOut;
 import com.google.gson.Gson;
 
 @ExtendWith(SpringExtension.class)
@@ -73,8 +73,8 @@ class VideoControllerTest {
         return new VideoCreateForm("my description", "my tile", "example.com/video");
     }
 
-    private VideosVoOut getVideoVoOut() {
-        return new VideosVoOut(getVideoVoIn().convert());
+    private VideoDto getVideoVoOut() {
+        return new VideoDto(getVideoVoIn().convert());
     }
 
     @Test
@@ -83,7 +83,7 @@ class VideoControllerTest {
                 new Video(new VideoCreateForm("desc1", "title1", "url1")),
                 new Video(new VideoCreateForm("desc2", "title2", "url2"))
         )
-                .map(VideosVoOut::new)
+                .map(VideoDto::new)
                 .toList();
 
         when(videoService.findAll()).thenReturn(videosVoOut);
@@ -98,7 +98,7 @@ class VideoControllerTest {
     @Test
     void succeedToGetOneVideosWhenIdExists() throws Exception {
         final var video1 = new Video(new VideoCreateForm("desc1", "title1", "url1"));
-        final var videoVoOut = new VideosVoOut(video1);
+        final var videoVoOut = new VideoDto(video1);
 
         when(videoService.findById(video1.getId()))
                 .thenReturn(Optional.of(videoVoOut));
@@ -113,7 +113,7 @@ class VideoControllerTest {
     @Test
     void failsToGetOneVideosWhenIdDoesNotExists() throws Exception {
         final var video1 = new Video(new VideoCreateForm("desc1", "title1", "url1"));
-        final var videoVoOut = new VideosVoOut(video1);
+        final var videoVoOut = new VideoDto(video1);
 
         when(videoService.findById(video1.getId()))
                 .thenReturn(Optional.of(videoVoOut));
@@ -128,7 +128,7 @@ class VideoControllerTest {
     @Test
     void failsToGetOneVideosWhenIdIsNotValid() throws Exception {
         final var video1 = new Video(new VideoCreateForm("desc1", "title1", "url1"));
-        final var videoVoOut = new VideosVoOut(video1);
+        final var videoVoOut = new VideoDto(video1);
 
         when(videoService.findById(video1.getId()))
                 .thenReturn(Optional.of(videoVoOut));
@@ -146,7 +146,7 @@ class VideoControllerTest {
 
         VideoCreateForm videoCreateForm = new VideoCreateForm(description, title, url);
         final var video = new Video(videoCreateForm);
-        final var videoVoOut = new VideosVoOut(video);
+        final var videoVoOut = new VideoDto(video);
 
         when(videoService.save(any())).thenReturn(videoVoOut);
 
@@ -216,7 +216,7 @@ class VideoControllerTest {
 
     @Test
     void deleteVideoWhenItemExistsInTheDatabase() throws Exception {
-        VideosVoOut videoVoOut = getVideoVoOut();
+        VideoDto videoVoOut = getVideoVoOut();
 
         doNothing().when(videoService).delete(videoVoOut.getId());
 
@@ -259,7 +259,7 @@ class VideoControllerTest {
         VideoUpdateForm payload = gson.fromJson(body, VideoUpdateForm.class);
         Video converted = getVideoVoIn().convert();
         Video updated = payload.update(converted);
-        VideosVoOut videoVoOut = new VideosVoOut(updated);
+        VideoDto videoVoOut = new VideoDto(updated);
 
         doReturn(Optional.of(videoVoOut))
                 .when(videoService)
@@ -273,7 +273,7 @@ class VideoControllerTest {
                 .getResponse()
                 .getContentAsString();
 
-        VideosVoOut responseVideo = gson.fromJson(response, VideosVoOut.class);
+        VideoDto responseVideo = gson.fromJson(response, VideoDto.class);
 
         assertNotNull(responseVideo.getTitle());
         assertNotNull(responseVideo.getDescription());
@@ -290,7 +290,7 @@ class VideoControllerTest {
 
     @Test
     void returnVideoWithoutAnyChangesWhenTryingToUpdateVideoAndTheGivenIdExistsButBodyIsEmpty() throws Exception {
-        VideosVoOut videoVoOut = getVideoVoOut();
+        VideoDto videoVoOut = getVideoVoOut();
         doReturn(Optional.of(videoVoOut)).when(videoService).findById(videoVoOut.getId());
 
         mockMvc.perform(
