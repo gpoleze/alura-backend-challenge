@@ -13,12 +13,16 @@ public class EntityWithUuidId {
     @Type(type = "pg-uuid")
     private UUID id;
 
-    public EntityWithUuidId() {
+    protected EntityWithUuidId() {
         this.id = UUID.randomUUID();
     }
 
+    protected EntityWithUuidId(UUID id) {
+        this.id = id;
+    }
+
     public UUID getId() {
-        return id;
+        return UUID.fromString(id.toString());
     }
 
     public EntityWithUuidId setId(UUID id) {

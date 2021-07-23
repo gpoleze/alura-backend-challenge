@@ -11,7 +11,7 @@ public class VideosVoOut {
     private final String url;
 
     public VideosVoOut(Video video) {
-        this.id=video.getId();
+        this.id = video.getId();
         this.description = video.getDescription();
         this.title = video.getTitle();
         this.url = video.getUrl();

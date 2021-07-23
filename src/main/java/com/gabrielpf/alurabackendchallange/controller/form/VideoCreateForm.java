@@ -1,4 +1,4 @@
-package com.gabrielpf.alurabackendchallange.vo.in;
+package com.gabrielpf.alurabackendchallange.controller.form;
 
 
 import javax.validation.constraints.NotBlank;
@@ -7,7 +7,7 @@ import javax.validation.constraints.Size;
 
 import com.gabrielpf.alurabackendchallange.model.Video;
 
-public class VideosVoIn {
+public class VideoCreateForm {
 
     @NotBlank
     @NotNull
@@ -22,9 +22,9 @@ public class VideosVoIn {
     @NotNull
     private String url;
 
-    protected VideosVoIn(){}
+    protected VideoCreateForm(){}
 
-    public VideosVoIn(String description, String title, String url) {
+    public VideoCreateForm(String description, String title, String url) {
         this.description = description;
         this.title = title;
         this.url = url;

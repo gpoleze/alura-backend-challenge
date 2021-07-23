@@ -1,13 +1,18 @@
 package com.gabrielpf.alurabackendchallange.controller;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -19,6 +24,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
@@ -34,10 +41,11 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import com.gabrielpf.alurabackendchallange.controller.form.VideoCreateForm;
+import com.gabrielpf.alurabackendchallange.controller.form.VideoUpdateForm;
 import com.gabrielpf.alurabackendchallange.exception.DataAlreadyExistsException;
 import com.gabrielpf.alurabackendchallange.model.Video;
 import com.gabrielpf.alurabackendchallange.service.VideoService;
-import com.gabrielpf.alurabackendchallange.vo.in.VideosVoIn;
 import com.gabrielpf.alurabackendchallange.vo.out.VideosVoOut;
 import com.google.gson.Gson;
 
@@ -45,22 +53,24 @@ import com.google.gson.Gson;
 @WebMvcTest(VideoController.class)
 class VideoControllerTest {
 
+    private final String baseUrl = "/videos/";
     @Autowired
     MockMvc mockMvc;
 
     @MockBean
     private VideoService videoService;
+    private final Gson gson = new Gson();
 
     private byte[] getBody(String title, String description, String url) {
         Map<String, String> content = new HashMap<>();
         content.put("title", title);
         content.put("description", description);
         content.put("url", url);
-        return new Gson().toJson(content).getBytes();
+        return gson.toJson(content).getBytes();
     }
 
-    private VideosVoIn getVideoVoIn() {
-        return new VideosVoIn("my description", "my tile", "example.com/video");
+    private VideoCreateForm getVideoVoIn() {
+        return new VideoCreateForm("my description", "my tile", "example.com/video");
     }
 
     private VideosVoOut getVideoVoOut() {
@@ -70,8 +80,8 @@ class VideoControllerTest {
     @Test
     void listAllVideos() throws Exception {
         var videosVoOut = Stream.of(
-                new Video(new VideosVoIn("desc1", "title1", "url1")),
-                new Video(new VideosVoIn("desc2", "title2", "url2"))
+                new Video(new VideoCreateForm("desc1", "title1", "url1")),
+                new Video(new VideoCreateForm("desc2", "title2", "url2"))
         )
                 .map(VideosVoOut::new)
                 .toList();
@@ -79,7 +89,7 @@ class VideoControllerTest {
         when(videoService.findAll()).thenReturn(videosVoOut);
 
         mockMvc
-                .perform(get("/videos"))
+                .perform(get(baseUrl))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andDo(print());
@@ -87,22 +97,22 @@ class VideoControllerTest {
 
     @Test
     void succeedToGetOneVideosWhenIdExists() throws Exception {
-        final var video1 = new Video(new VideosVoIn("desc1", "title1", "url1"));
+        final var video1 = new Video(new VideoCreateForm("desc1", "title1", "url1"));
         final var videoVoOut = new VideosVoOut(video1);
 
         when(videoService.findById(video1.getId()))
                 .thenReturn(Optional.of(videoVoOut));
 
         mockMvc
-                .perform(get("/videos/" + video1.getId()))
+                .perform(get(baseUrl + video1.getId()))
                 .andExpect(status().isOk())
-                .andExpect(content().json(new Gson().toJson(videoVoOut)))
+                .andExpect(content().json(gson.toJson(videoVoOut)))
                 .andDo(print());
     }
 
     @Test
     void failsToGetOneVideosWhenIdDoesNotExists() throws Exception {
-        final var video1 = new Video(new VideosVoIn("desc1", "title1", "url1"));
+        final var video1 = new Video(new VideoCreateForm("desc1", "title1", "url1"));
         final var videoVoOut = new VideosVoOut(video1);
 
         when(videoService.findById(video1.getId()))
@@ -110,14 +120,14 @@ class VideoControllerTest {
         var badId = UUID.randomUUID();
 
         mockMvc
-                .perform(get("/videos/" + badId))
+                .perform(get(baseUrl + badId))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string("Not Found"));
     }
 
     @Test
     void failsToGetOneVideosWhenIdIsNotValid() throws Exception {
-        final var video1 = new Video(new VideosVoIn("desc1", "title1", "url1"));
+        final var video1 = new Video(new VideoCreateForm("desc1", "title1", "url1"));
         final var videoVoOut = new VideosVoOut(video1);
 
         when(videoService.findById(video1.getId()))
@@ -133,15 +143,14 @@ class VideoControllerTest {
         String title = "title1";
         String description = "desc1";
         String url = "url1";
-        var gson = new Gson();
 
-        VideosVoIn videosVoIn = new VideosVoIn(description, title, url);
-        final var video = new Video(videosVoIn);
+        VideoCreateForm videoCreateForm = new VideoCreateForm(description, title, url);
+        final var video = new Video(videoCreateForm);
         final var videoVoOut = new VideosVoOut(video);
 
         when(videoService.save(any())).thenReturn(videoVoOut);
 
-        MockHttpServletRequestBuilder request = post("/videos")
+        MockHttpServletRequestBuilder request = post(baseUrl)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(getBody(title, description, url));
 
@@ -174,9 +183,9 @@ class VideoControllerTest {
         content.put("description", description);
         content.put("url", url);
 
-        MockHttpServletRequestBuilder request = post("/videos")
+        MockHttpServletRequestBuilder request = post(baseUrl)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(new Gson().toJson(content));
+                .content(gson.toJson(content));
 
         mockMvc
                 .perform(request)
@@ -192,9 +201,9 @@ class VideoControllerTest {
         String description = "desc";
         String url = "url";
 
-        when(videoService.save(any(VideosVoIn.class))).thenThrow(new DataAlreadyExistsException(VideosVoIn.class, "title"));
+        when(videoService.save(any(VideoCreateForm.class))).thenThrow(new DataAlreadyExistsException(VideoCreateForm.class, "title"));
 
-        MockHttpServletRequestBuilder request = post("/videos")
+        MockHttpServletRequestBuilder request = post(baseUrl)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(getBody(title, description, url));
 
@@ -211,7 +220,7 @@ class VideoControllerTest {
 
         doNothing().when(videoService).delete(videoVoOut.getId());
 
-        mockMvc.perform(delete("/videos/" + videoVoOut.getId()))
+        mockMvc.perform(delete(baseUrl + videoVoOut.getId()))
                 .andExpect(status().isNoContent());
     }
 
@@ -219,7 +228,7 @@ class VideoControllerTest {
     void returnASuccessStatusWhenTryingToDeleteAnItemThatDoesNotExistInTheDatabase() throws Exception {
         doNothing().when(videoService).delete(any());
 
-        mockMvc.perform(delete("/videos/" + UUID.randomUUID()))
+        mockMvc.perform(delete(baseUrl + UUID.randomUUID()))
                 .andExpect(status().isNoContent());
     }
 
@@ -228,4 +237,84 @@ class VideoControllerTest {
         mockMvc.perform(delete("/videos/i-am-clearly-not-a-valid-uuid"))
                 .andExpect(status().isBadRequest());
     }
+
+
+    private static Stream<Arguments> providerReturnUpdatedVideoWhenRequestIsCorrect() {
+        Function<String[][], Map<String, String>> getMap = stringArray -> Stream.of(stringArray).collect(Collectors.toMap(data -> data[0], data -> data[1]));
+        return Stream.of(
+                Arguments.of(getMap.apply(new String[][]{{"title", "newTitle"}})),
+                Arguments.of(getMap.apply(new String[][]{{"description", "newdescription"}})),
+                Arguments.of(getMap.apply(new String[][]{{"url", "newUrl"}})),
+                Arguments.of(getMap.apply(new String[][]{{"title", "newTitle"}, {"description", "newdescription"}})),
+                Arguments.of(getMap.apply(new String[][]{{"title", "newTitle"}, {"url", "newUrl"}})),
+                Arguments.of(getMap.apply(new String[][]{{"url", "newUrl"}, {"description", "newdescription"}})),
+                Arguments.of(getMap.apply(new String[][]{{"title", "newTitle"}, {"description", "newdescription"}, {"url", "newUrl"}}))
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("providerReturnUpdatedVideoWhenRequestIsCorrect")
+    void returnUpdatedVideoWhenRequestIsCorrect(Map<String, String> items) throws Exception {
+        String body = gson.toJson(items);
+        VideoUpdateForm payload = gson.fromJson(body, VideoUpdateForm.class);
+        Video converted = getVideoVoIn().convert();
+        Video updated = payload.update(converted);
+        VideosVoOut videoVoOut = new VideosVoOut(updated);
+
+        doReturn(Optional.of(videoVoOut))
+                .when(videoService)
+                .update(eq(videoVoOut.getId()), any(VideoUpdateForm.class));
+
+        var response = mockMvc.perform(
+                patch(baseUrl + videoVoOut.getId()).contentType(MediaType.APPLICATION_JSON).content(body)
+        )
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        VideosVoOut responseVideo = gson.fromJson(response, VideosVoOut.class);
+
+        assertNotNull(responseVideo.getTitle());
+        assertNotNull(responseVideo.getDescription());
+        assertNotNull(responseVideo.getUrl());
+
+        if (payload.getTitle() != null)
+            assertEquals(payload.getTitle(), responseVideo.getTitle());
+        if (payload.getDescription() != null)
+            assertEquals(payload.getDescription(), responseVideo.getDescription());
+        if (payload.getUrl() != null)
+            assertEquals(payload.getUrl(), responseVideo.getUrl());
+
+    }
+
+    @Test
+    void returnVideoWithoutAnyChangesWhenTryingToUpdateVideoAndTheGivenIdExistsButBodyIsEmpty() throws Exception {
+        VideosVoOut videoVoOut = getVideoVoOut();
+        doReturn(Optional.of(videoVoOut)).when(videoService).findById(videoVoOut.getId());
+
+        mockMvc.perform(
+                patch(baseUrl + videoVoOut.getId()).contentType(MediaType.APPLICATION_JSON).content("{}")
+        )
+                .andExpect(status().isOk())
+                .andExpect(content().json(gson.toJson(videoVoOut)));
+
+    }
+
+    @Test
+    void returnBadRequestWhenUpdatingVideoAndIdISNotValid() throws Exception {
+        mockMvc.perform(
+                patch(baseUrl + "definitly-not-valid-uuid").contentType(MediaType.APPLICATION_JSON).content("{}")
+        )
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void returnBadRequestUpdatingVideoAndTheGivenIdDoesntExist() throws Exception {
+        doReturn(Optional.empty()).when(videoService).update(UUID.randomUUID(), new VideoUpdateForm());
+        mockMvc.perform(patch(baseUrl + UUID.randomUUID()).contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isNotFound());
+    }
+
+
 }
