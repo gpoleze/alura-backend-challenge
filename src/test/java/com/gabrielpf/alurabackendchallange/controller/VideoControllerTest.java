@@ -2,9 +2,11 @@ package com.gabrielpf.alurabackendchallange.controller;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -28,14 +30,12 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.MessageSource;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import com.gabrielpf.alurabackendchallange.exception.DataAlreadyExistsException;
-import com.gabrielpf.alurabackendchallange.handler.ValidationErrorHandler;
 import com.gabrielpf.alurabackendchallange.model.Video;
 import com.gabrielpf.alurabackendchallange.service.VideoService;
 import com.gabrielpf.alurabackendchallange.vo.in.VideosVoIn;
@@ -51,6 +51,22 @@ class VideoControllerTest {
 
     @MockBean
     private VideoService videoService;
+
+    private byte[] getBody(String title, String description, String url) {
+        Map<String, String> content = new HashMap<>();
+        content.put("title", title);
+        content.put("description", description);
+        content.put("url", url);
+        return new Gson().toJson(content).getBytes();
+    }
+
+    private VideosVoIn getVideoVoIn() {
+        return new VideosVoIn("my description", "my tile", "example.com/video");
+    }
+
+    private VideosVoOut getVideoVoOut() {
+        return new VideosVoOut(getVideoVoIn().convert());
+    }
 
     @Test
     void listAllVideos() throws Exception {
@@ -138,15 +154,6 @@ class VideoControllerTest {
                 .andExpect(redirectedUrl("http://localhost/videos/" + videoVoOut.getId()));
     }
 
-    private byte[] getBody(String title, String description, String url) {
-        Map<String, String> content = new HashMap<>();
-        content.put("title", title);
-        content.put("description", description);
-        content.put("url", url);
-        return new Gson().toJson(content).getBytes();
-    }
-
-
     private static Stream<Arguments> providereturnBadRequestWhenMissingArgument() {
         return Stream.of(
                 Arguments.of("title", "description", ""),
@@ -202,5 +209,30 @@ class VideoControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(content().json("{\"field\":\"title\", \"error\":\"The given value is already present in the database\"}"))
                 .andDo(print());
+    }
+
+    @Test
+    void deleteVideoWhenItemExistsInTheDatabase() throws Exception {
+        VideosVoOut videoVoOut = getVideoVoOut();
+
+        doNothing().when(videoService).delete(videoVoOut.getId());
+
+        mockMvc.perform(delete("/videos/" + videoVoOut.getId()))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void returnASuccessStatusWhenTryingToDeleteAnItemThatDoesNotExistInTheDatabase() throws Exception {
+        doNothing().when(videoService).delete(any());
+
+        mockMvc.perform(delete("/videos/" + UUID.randomUUID()))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void sendBadRequestResponseWhenIdIsInvalidAndTryingToDeleteAVideo() throws Exception {
+        mockMvc.perform(delete("/videos/i-am-clearly-not-a-valid-uuid"))
+                .andExpect(status().isBadRequest());
+        ;
     }
 }

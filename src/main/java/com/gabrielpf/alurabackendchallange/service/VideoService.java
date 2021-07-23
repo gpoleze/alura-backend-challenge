@@ -5,7 +5,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
-import org.springframework.validation.FieldError;
 
 import com.gabrielpf.alurabackendchallange.exception.DataAlreadyExistsException;
 import com.gabrielpf.alurabackendchallange.repository.VideoRepository;
@@ -40,5 +39,11 @@ public class VideoService {
         return videoRepo
                 .findById(id)
                 .map(VideosVoOut::new);
+    }
+
+    public void delete(UUID id) {
+        videoRepo
+                .findById(id)
+                .ifPresent(videoRepo::delete);
     }
 }
