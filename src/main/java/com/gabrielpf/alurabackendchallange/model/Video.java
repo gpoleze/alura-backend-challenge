@@ -11,7 +11,7 @@ public class Video extends EntityWithUuidId {
     @Column(unique = true, nullable = false, length = 256)
     private String title;
 
-    @Column
+    @Column(nullable = false)
     private String description;
 
     @Column(nullable = false)
