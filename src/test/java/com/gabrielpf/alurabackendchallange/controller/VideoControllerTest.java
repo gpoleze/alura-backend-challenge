@@ -15,7 +15,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -70,10 +69,10 @@ class VideoControllerTest {
 
     @Test
     void listAllVideos() throws Exception {
-        var videosVoOut = Arrays.asList(
+        var videosVoOut = Stream.of(
                 new Video(new VideosVoIn("desc1", "title1", "url1")),
                 new Video(new VideosVoIn("desc2", "title2", "url2"))
-        ).stream()
+        )
                 .map(VideosVoOut::new)
                 .toList();
 
@@ -154,7 +153,7 @@ class VideoControllerTest {
                 .andExpect(redirectedUrl("http://localhost/videos/" + videoVoOut.getId()));
     }
 
-    private static Stream<Arguments> providereturnBadRequestWhenMissingArgument() {
+    private static Stream<Arguments> providerReturnBadRequestWhenMissingArgument() {
         return Stream.of(
                 Arguments.of("title", "description", ""),
                 Arguments.of("title", null, "url"),
@@ -167,13 +166,13 @@ class VideoControllerTest {
     }
 
     @ParameterizedTest
-    @MethodSource("providereturnBadRequestWhenMissingArgument")
+    @MethodSource("providerReturnBadRequestWhenMissingArgument")
     void returnBadRequestWhenMissingArgument(String title, String description, String url) throws Exception {
 
         Map<String, String> content = new HashMap<>();
         content.put("title", title);
         content.put("description", description);
-        content.put("url", null);
+        content.put("url", url);
 
         MockHttpServletRequestBuilder request = post("/videos")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -192,11 +191,6 @@ class VideoControllerTest {
         String title = "title";
         String description = "desc";
         String url = "url";
-        var gson = new Gson();
-
-        VideosVoIn videoVoIn = new VideosVoIn(description, title, url);
-        Video video = videoVoIn.convert();
-        VideosVoOut videoVoOut = new VideosVoOut(video);
 
         when(videoService.save(any(VideosVoIn.class))).thenThrow(new DataAlreadyExistsException(VideosVoIn.class, "title"));
 
@@ -233,6 +227,5 @@ class VideoControllerTest {
     void sendBadRequestResponseWhenIdIsInvalidAndTryingToDeleteAVideo() throws Exception {
         mockMvc.perform(delete("/videos/i-am-clearly-not-a-valid-uuid"))
                 .andExpect(status().isBadRequest());
-        ;
     }
 }
