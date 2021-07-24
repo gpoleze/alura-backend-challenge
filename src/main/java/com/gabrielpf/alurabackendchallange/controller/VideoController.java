@@ -64,7 +64,7 @@ public class VideoController {
 
     @PatchMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity patchVideo(@PathVariable UUID id, @Valid @RequestBody VideoUpdateForm videoUpdateForm) {
-        if (videoUpdateForm.hasAllFieldsNull())
+        if (videoUpdateForm.hasAllFieldsBlank())
             return getOne(id);
 
 

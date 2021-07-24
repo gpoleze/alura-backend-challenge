@@ -39,7 +39,10 @@ public class VideoDto {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         VideoDto videoDto = (VideoDto) o;
-        return Objects.equals(description, videoDto.description) && Objects.equals(id, videoDto.id) && Objects.equals(title, videoDto.title) && Objects.equals(url, videoDto.url);
+        return Objects.equals(id, videoDto.id)
+                && Objects.equals(title, videoDto.title)
+                && Objects.equals(description, videoDto.description)
+                && Objects.equals(url, videoDto.url);
     }
 
     @Override

@@ -22,7 +22,7 @@ public class VideoUpdateForm {
 
     public VideoUpdateForm() {}
 
-    public VideoUpdateForm(String description, String title, String url) {
+    public VideoUpdateForm(String title, String description, String url) {
         this.description = description;
         this.title = title;
         this.url = url;
@@ -42,27 +42,20 @@ public class VideoUpdateForm {
 
     public Video update(Video oldVideo) {
         Video newVideo = oldVideo.getCopy();
-        if (title != null)
+        if (title != null && !title.isBlank())
             newVideo.setTitle(title);
-        if (description != null)
+        if (description != null && !description.isBlank())
             newVideo.setDescription(description);
-        if (url != null)
+        if (url != null && !url.isBlank())
             newVideo.setUrl(url);
-
-//        for (Field field : this.getClass().getDeclaredFields()) {
-//            if (field.get(this) != null){
-//                Field newField = newVideo.getClass().getField(field.getName());
-//                newField.set(newVideo, field.get(this));
-//            }
-//        }
 
         return newVideo;
     }
 
-    public boolean hasAllFieldsNull() {
+    public boolean hasAllFieldsBlank() {
         Predicate<Field> hasValue = f -> {
             try {
-                return f.get(this) != null;
+                return f.get(this) != null && !((String) f.get(this)).isBlank();
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
                 return true;
