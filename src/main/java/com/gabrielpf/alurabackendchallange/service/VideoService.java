@@ -3,15 +3,16 @@ package com.gabrielpf.alurabackendchallange.service;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.StreamSupport;
 
 import org.springframework.stereotype.Service;
 
+import com.gabrielpf.alurabackendchallange.controller.form.VideoCreateForm;
 import com.gabrielpf.alurabackendchallange.controller.form.VideoUpdateForm;
+import com.gabrielpf.alurabackendchallange.dto.VideoDto;
 import com.gabrielpf.alurabackendchallange.exception.DataAlreadyExistsException;
 import com.gabrielpf.alurabackendchallange.model.Video;
 import com.gabrielpf.alurabackendchallange.repository.VideoRepository;
-import com.gabrielpf.alurabackendchallange.controller.form.VideoCreateForm;
-import com.gabrielpf.alurabackendchallange.dto.VideoDto;
 
 @Service
 public class VideoService {
@@ -30,9 +31,7 @@ public class VideoService {
     }
 
     public List<VideoDto> findAll() {
-        return videoRepo
-                .findAll()
-                .stream()
+        return StreamSupport.stream(videoRepo.findAll().spliterator(), true)
                 .map(VideoDto::new)
                 .toList();
     }
@@ -53,7 +52,7 @@ public class VideoService {
 
         Optional<Video> videoOptional = videoRepo.findById(id);
 
-        if(videoOptional.isPresent()) {
+        if (videoOptional.isPresent()) {
             Video updatedVideo = videoUpdateForm.update(videoOptional.get());
             videoRepo.save(updatedVideo);
             return Optional.of(new VideoDto(updatedVideo));

@@ -32,6 +32,13 @@ public class Video extends EntityWithUuidId {
         this.url = oldVideo.url;
     }
 
+    public Video(String title, String description, String url) {
+        super();
+        this.title = title;
+        this.description = description;
+        this.url = url;
+    }
+
     public String getTitle() {
         return title;
     }

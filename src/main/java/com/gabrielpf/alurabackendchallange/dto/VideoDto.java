@@ -1,5 +1,6 @@
 package com.gabrielpf.alurabackendchallange.dto;
 
+import java.util.Objects;
 import java.util.UUID;
 
 import com.gabrielpf.alurabackendchallange.model.Video;
@@ -31,5 +32,18 @@ public class VideoDto {
 
     public String getUrl() {
         return url;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        VideoDto videoDto = (VideoDto) o;
+        return Objects.equals(description, videoDto.description) && Objects.equals(id, videoDto.id) && Objects.equals(title, videoDto.title) && Objects.equals(url, videoDto.url);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(description, id, title, url);
     }
 }
