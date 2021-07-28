@@ -3,6 +3,7 @@ package com.gabrielpf.alurabackendchallange.controller;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assumptions.assumingThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -279,12 +280,9 @@ class VideoControllerTest {
         assertNotNull(responseVideo.getDescription());
         assertNotNull(responseVideo.getUrl());
 
-        if (payload.getTitle() != null)
-            assertEquals(payload.getTitle(), responseVideo.getTitle());
-        if (payload.getDescription() != null)
-            assertEquals(payload.getDescription(), responseVideo.getDescription());
-        if (payload.getUrl() != null)
-            assertEquals(payload.getUrl(), responseVideo.getUrl());
+        assumingThat(payload.getTitle() != null, () -> assertEquals(payload.getTitle(), responseVideo.getTitle()));
+        assumingThat(payload.getDescription() != null, () -> assertEquals(payload.getDescription(), responseVideo.getDescription()));
+        assumingThat(payload.getUrl() != null, () -> assertEquals(payload.getUrl(), responseVideo.getUrl()));
 
     }
 
