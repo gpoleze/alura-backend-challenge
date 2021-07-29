@@ -13,6 +13,11 @@ public class Category extends EntityWithUuidId {
 
     protected Category() {}
 
+    public Category(String title, String color) {
+        this.title = title;
+        this.color = color;
+    }
+
     public String getTitle() {
         return title;
     }

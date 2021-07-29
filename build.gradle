@@ -2,7 +2,8 @@ plugins {
     id 'org.springframework.boot' version '2.5.2'
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
     id 'java'
-    id "org.flywaydb.flyway" version "7.11.3"
+    id 'org.flywaydb.flyway' version '7.11.3'
+    id 'com.palantir.docker-run' version '0.27.0'
 }
 
 group = 'com.gabrielpf'
@@ -22,16 +23,59 @@ dependencies {
     implementation 'org.flywaydb:flyway-core:7.11.2'
     runtimeOnly 'org.postgresql:postgresql'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    implementation 'org.junit.platform:junit-platform-runner:1.7.2'
 }
 
 test {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        excludeTags "Integration"
+    }
+}
+
+ext {
+    dbEnvVars = [
+            host    : System.getenv('DB_HOST') ?: "localhost",
+            schema  : System.getenv('DB_SCHEMA') ?: "alurapix-dev",
+            username: System.getenv('DB_USERNAME') ?: "local_dev",
+            password: System.getenv('DB_PASSWORD') ?: "local_dev",
+            port    : System.getenv('DB_PORT') ?: "5432"
+    ]
+}
+
+
+dockerRun {
+    name 'integrationTest'
+    image 'postgres:latest'
+    volumes './docker/data': '/var/lib/postgresql/data'
+    ports "${dbEnvVars.port}:5432"
+    daemonize true
+
+    env('POSTGRES_DB': "${dbEnvVars.schema}",
+            'POSTGRES_USER': "${dbEnvVars.username}",
+            'POSTGRES_PASSWORD': "${dbEnvVars.password}"
+    )
+    clean true
+}
+
+task integrationTest(type: Test) {
+    description = 'Runs the integration tests.'
+    group = 'verification'
+    useJUnitPlatform {
+        includeTags "Integration"
+    }
+    shouldRunAfter test
+    dependsOn tasks.dockerRun
+    finalizedBy tasks.dockerStop
+}
+
+check {
+    dependsOn integrationTest
 }
 
 flyway {
-    url = System.getenv('DB_URL')
-    user = System.getenv('DB_USERNAME')
-    password = System.getenv('DB_PASSWORD')
+    url = "jdbc:postgresql://${dbEnvVars.host}:${dbEnvVars.port}/${dbEnvVars.schema}"
+    user = dbEnvVars.username
+    password = dbEnvVars.password
     driver = 'org.postgresql.Driver'
     locations = ['classpath:migrations', 'db/migration']
 }
