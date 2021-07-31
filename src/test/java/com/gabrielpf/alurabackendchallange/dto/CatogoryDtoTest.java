@@ -1,6 +1,6 @@
 package com.gabrielpf.alurabackendchallange.dto;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
@@ -11,8 +11,8 @@ class CatogoryDtoTest {
     void constructorTransformsCategoryInCategoryDTO() {
         Category category = new Category("title", "color");
         CategoryDto categoryDto = new CategoryDto(category);
-        assertEquals(category.getId(), categoryDto.getId());
-        assertEquals(category.getTitle(), categoryDto.getTitle());
-        assertEquals(category.getColor(), categoryDto.getColor());
+        assertEquals(category.getId(), categoryDto.id());
+        assertEquals(category.getTitle(), categoryDto.title());
+        assertEquals(category.getColor(), categoryDto.color());
     }
 }
