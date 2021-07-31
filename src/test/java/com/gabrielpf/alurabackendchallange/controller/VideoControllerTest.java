@@ -29,6 +29,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -78,65 +80,73 @@ class VideoControllerTest {
         return new VideoDto(getVideoVoIn().convert());
     }
 
-    @Test
-    void listAllVideos() throws Exception {
-        var videosVoOut = Stream.of(
-                new Video(new VideoCreateForm("desc1", "title1", "url1")),
-                new Video(new VideoCreateForm("desc2", "title2", "url2"))
-        )
-                .map(VideoDto::new)
-                .toList();
+    @Nested
+    @DisplayName("findAll method")
+    class FindAllUnitTest {
+        @Test
+        void listAllVideos() throws Exception {
+            var videosVoOut = Stream.of(
+                            new Video(new VideoCreateForm("desc1", "title1", "url1")),
+                            new Video(new VideoCreateForm("desc2", "title2", "url2"))
+                    )
+                    .map(VideoDto::new)
+                    .toList();
 
-        when(videoService.findAll()).thenReturn(videosVoOut);
+            when(videoService.findAll()).thenReturn(videosVoOut);
 
-        mockMvc
-                .perform(get(baseUrl))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andDo(print());
+            mockMvc
+                    .perform(get(baseUrl))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$", hasSize(2)))
+                    .andDo(print());
+        }
     }
 
-    @Test
-    void succeedToGetOneVideosWhenIdExists() throws Exception {
-        final var video1 = new Video(new VideoCreateForm("desc1", "title1", "url1"));
-        final var videoVoOut = new VideoDto(video1);
+    @Nested
+    @DisplayName("getOne one")
+    class GetOneUnitTest {
+        @Test
+        void succeedToGetOneVideosWhenIdExists() throws Exception {
+            final var video1 = new Video(new VideoCreateForm("desc1", "title1", "url1"));
+            final var videoVoOut = new VideoDto(video1);
 
-        when(videoService.findById(video1.getId()))
-                .thenReturn(Optional.of(videoVoOut));
+            when(videoService.findById(video1.getId()))
+                    .thenReturn(Optional.of(videoVoOut));
 
-        mockMvc
-                .perform(get(baseUrl + video1.getId()))
-                .andExpect(status().isOk())
-                .andExpect(content().json(gson.toJson(videoVoOut)))
-                .andDo(print());
-    }
+            mockMvc
+                    .perform(get(baseUrl + video1.getId()))
+                    .andExpect(status().isOk())
+                    .andExpect(content().json(gson.toJson(videoVoOut)))
+                    .andDo(print());
+        }
 
-    @Test
-    void failsToGetOneVideosWhenIdDoesNotExists() throws Exception {
-        final var video1 = new Video(new VideoCreateForm("desc1", "title1", "url1"));
-        final var videoVoOut = new VideoDto(video1);
+        @Test
+        void failsToGetOneVideosWhenIdDoesNotExists() throws Exception {
+            final var video1 = new Video(new VideoCreateForm("desc1", "title1", "url1"));
+            final var videoVoOut = new VideoDto(video1);
 
-        when(videoService.findById(video1.getId()))
-                .thenReturn(Optional.of(videoVoOut));
-        var badId = UUID.randomUUID();
+            when(videoService.findById(video1.getId()))
+                    .thenReturn(Optional.of(videoVoOut));
+            var badId = UUID.randomUUID();
 
-        mockMvc
-                .perform(get(baseUrl + badId))
-                .andExpect(status().isNotFound())
-                .andExpect(content().string("Not Found"));
-    }
+            mockMvc
+                    .perform(get(baseUrl + badId))
+                    .andExpect(status().isNotFound())
+                    .andExpect(content().string("Not Found"));
+        }
 
-    @Test
-    void failsToGetOneVideosWhenIdIsNotValid() throws Exception {
-        final var video1 = new Video(new VideoCreateForm("desc1", "title1", "url1"));
-        final var videoVoOut = new VideoDto(video1);
+        @Test
+        void failsToGetOneVideosWhenIdIsNotValid() throws Exception {
+            final var video1 = new Video(new VideoCreateForm("desc1", "title1", "url1"));
+            final var videoVoOut = new VideoDto(video1);
 
-        when(videoService.findById(video1.getId()))
-                .thenReturn(Optional.of(videoVoOut));
+            when(videoService.findById(video1.getId()))
+                    .thenReturn(Optional.of(videoVoOut));
 
-        mockMvc
-                .perform(get("/videos/not-valid-uuid"))
-                .andExpect(status().isBadRequest());
+            mockMvc
+                    .perform(get("/videos/not-valid-uuid"))
+                    .andExpect(status().isBadRequest());
+        }
     }
 
     @Test

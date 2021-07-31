@@ -43,7 +43,7 @@ public class VideoController {
         Optional<VideoDto> voOut = videoService.findById(id);
 
         if (voOut.isPresent())
-            return ResponseEntity.ok(voOut);
+            return ResponseEntity.ok(voOut.get());
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not Found");
     }
