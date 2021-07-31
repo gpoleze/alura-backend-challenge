@@ -46,7 +46,7 @@ ext {
 dockerRun {
     name 'integrationTest'
     image 'postgres:latest'
-    volumes './docker/test-data': '/var/lib/postgresql/data'
+    volumes 'src/test/docker/test-data': '/var/lib/postgresql/data'
     ports "${dbEnvVars.port}:5432"
     daemonize true
 
