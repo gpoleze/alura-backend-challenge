@@ -25,9 +25,9 @@ jobs:
       - name: Test with Gradle
         run: ./gradlew test
 
-  integration_tests:
-    runs-on: ubuntu-latest
-    needs: unit_test
+#  integration_tests:
+#    runs-on: ubuntu-latest
+#    needs: unit_test
 #    services:
 #      postgres:
 #        image: postgres
@@ -39,23 +39,23 @@ jobs:
 #          POSTGRES_PASSWORD: local_dev
 #        ports:
 #          - "5432:5432"
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up JDK 16
-      uses: actions/setup-java@v2
-      with:
-        java-version: '16'
-        distribution: 'adopt'
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-    - name: Checking if docker is ok
-    - name: Test with Gradle
-      run: ./gradlew integrationTest
-      env:
-        DB_USERNAME: local_dev
-        DB_PORT: 5432
-        DB_HOST: localhost
-        DB_SCHEMAa: alurapix-dev
+#    steps:
+#    - uses: actions/checkout@v2
+#    - name: Set up JDK 16
+#      uses: actions/setup-java@v2
+#      with:
+#        java-version: '16'
+#        distribution: 'adopt'
+#    - name: Grant execute permission for gradlew
+#      run: chmod +x gradlew
+#    - name: Checking if docker is ok
+#    - name: Test with Gradle
+#      run: ./gradlew integrationTest
+#      env:
+#        DB_USERNAME: local_dev
+#        DB_PORT: 5432
+#        DB_HOST: localhost
+#        DB_SCHEMAa: alurapix-dev
         DB_PASSWORD: local_dev
 
   build:
