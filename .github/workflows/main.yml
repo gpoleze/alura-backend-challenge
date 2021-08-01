@@ -32,7 +32,7 @@ jobs:
       postgres:
         image: postgres
         volumes:
-          - "${GITHUB_WORKSPACE}/src/test/docker/test-data:/var/lib/postgresql/data"
+          - "$GITHUB_WORKSPACE/src/test/docker/test-data:/var/lib/postgresql/data"
         env:
           POSTGRES_DB: alurapix-dev
           POSTGRES_USER: local_dev
