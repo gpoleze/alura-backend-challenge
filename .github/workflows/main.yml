@@ -28,17 +28,17 @@ jobs:
   integration_tests:
     runs-on: ubuntu-latest
     needs: unit_test
-    services:
-      postgres:
-        image: postgres
-        volumes:
-          - "src/test/docker/test-data:/var/lib/postgresql/data"
-        env:
-          POSTGRES_DB: alurapix-dev
-          POSTGRES_USER: local_dev
-          POSTGRES_PASSWORD: local_dev
-        ports:
-          - "5432:5432"
+#    services:
+#      postgres:
+#        image: postgres
+#        volumes:
+#          - "src/test/docker/test-data:/var/lib/postgresql/data"
+#        env:
+#          POSTGRES_DB: alurapix-dev
+#          POSTGRES_USER: local_dev
+#          POSTGRES_PASSWORD: local_dev
+#        ports:
+#          - "5432:5432"
     steps:
     - uses: actions/checkout@v2
     - name: Set up JDK 16
