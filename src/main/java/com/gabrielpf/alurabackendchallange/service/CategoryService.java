@@ -18,6 +18,7 @@ import com.gabrielpf.alurabackendchallange.repository.CategoryRepository;
 public class CategoryService {
 
     private final CategoryRepository repository;
+    private final VideoCategoryRepository videoCategoryRepository;
 
     public CategoryService(CategoryRepository repository) {
         this.repository = repository;
@@ -43,6 +44,7 @@ public class CategoryService {
     }
 
     public void delete(UUID id) {
+        videoCategoryRepository
         repository.deleteById(id);
     }
 }
