@@ -43,7 +43,7 @@ jobs:
         DB_USERNAME: local_dev
         DB_PORT: 5433
         DB_HOST: localhost
-        DB_SCHEMAa: lurapix-dev
+        DB_SCHEMAa: alurapix-dev
         DB_PASSWORD: local_dev
 
   build:
