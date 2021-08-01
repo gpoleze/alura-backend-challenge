@@ -1,10 +1,12 @@
 package com.gabrielpf.alurabackendchallange.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -212,4 +214,35 @@ class CategoriesControllerTest {
                     .andDo(print());
         }
     }
+
+    @Nested
+    @DisplayName("Delete category")
+    class DeleteCategoryUnitTest {
+        @Test
+        void deleteCategoryWhenItemExistsInTheDatabase() throws Exception {
+            CategoryDto categoryDto = getCatogoryDto();
+
+            doNothing().when(service).delete(categoryDto.id());
+
+            mockMvc.perform(delete(baseUrl + categoryDto.id()))
+                    .andExpect(status().isNoContent());
+        }
+
+        @Test
+        void returnASuccessStatusWhenTryingToDeleteAnItemThatDoesNotExistInTheDatabase() throws Exception {
+            doNothing().when(service).delete(any());
+
+            mockMvc.perform(delete(baseUrl + UUID.randomUUID()))
+                    .andExpect(status().isNoContent());
+        }
+
+        @Test
+        void sendBadRequestResponseWhenIdIsInvalidAndTryingToDeleteAVideo() throws Exception {
+            mockMvc.perform(delete(baseUrl + "i-am-clearly-not-a-valid-uuid"))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    // O que acontece se eu deletar uma categoria asocciada a um video?
+    // O que acontece se eu deletar uma video asocciado a uma categoria?
 }

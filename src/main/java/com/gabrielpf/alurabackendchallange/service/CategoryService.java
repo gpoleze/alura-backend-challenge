@@ -41,4 +41,8 @@ public class CategoryService {
         Category savedCategory = repository.save(form.convert());
         return new CategoryDto(savedCategory);
     }
+
+    public void delete(UUID id) {
+        repository.deleteById(id);
+    }
 }

@@ -10,6 +10,7 @@ import javax.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -51,5 +52,11 @@ public class CategoryController {
 
         final URI uri = uriBuilder.path("/categories/{id}").buildAndExpand(categoryDto.id()).toUri();
         return ResponseEntity.created(uri).body(categoryDto);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<CategoryDto> delete(@PathVariable UUID id){
+        service.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

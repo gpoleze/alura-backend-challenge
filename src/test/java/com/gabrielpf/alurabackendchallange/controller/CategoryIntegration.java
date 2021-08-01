@@ -4,10 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.HashMap;
@@ -29,7 +31,6 @@ import com.gabrielpf.alurabackendchallange.model.Category;
 import com.google.gson.Gson;
 import com.google.gson.JsonParser;
 
-//@SpringBootTest(classes = {AluraBackendChallangeApplication.class})
 @SpringBootTest
 @AutoConfigureMockMvc
 @Tag("Integration")
@@ -69,15 +70,13 @@ public class CategoryIntegration {
 
     @Test
     void get201StatusAndBodyContentWhenCreatingANewCategory() throws Exception {
-        String expectedTitle = "title from integration test" + UUID.randomUUID().toString();
+        String expectedTitle = "title from integration test" + UUID.randomUUID();
         String expectedColor = "FFF";
 
         Map<String, String> content = new HashMap<>();
         content.put("title", expectedTitle);
         content.put("color", expectedColor);
         var body = gson.toJson(content).getBytes();
-
-        CategoryDto expected = new CategoryDto(UUID.randomUUID(), expectedTitle, expectedColor);
 
         MockHttpServletResponse response = mockMvc.perform(post(baseUrl)
                         .content(body)
@@ -95,6 +94,27 @@ public class CategoryIntegration {
 
         assertNotNull(response.getRedirectedUrl());
         assertTrue(response.getRedirectedUrl().startsWith("http://localhost" + baseUrl));
+    }
+
+    @Test
+    void get204StatusAndNoBodyContentWhenDeletingCategory() throws Exception {
+        String expectedTitle = "I should be deleted - integration test" + UUID.randomUUID();
+        String expectedColor = "FFF";
+
+        Map<String, String> content = new HashMap<>();
+        content.put("title", expectedTitle);
+        content.put("color", expectedColor);
+        var body = gson.toJson(content).getBytes();
+
+        // Create category bo be deleted
+        var creationResponse = mockMvc.perform(post(baseUrl).content(body).contentType(MediaType.APPLICATION_JSON))
+                .andReturn().getResponse();
+        var id = JsonParser.parseString(creationResponse.getContentAsString()).getAsJsonObject().get("id").getAsString();
+
+
+        mockMvc.perform(delete(baseUrl + id))
+                .andExpect(status().isNoContent())
+                .andExpect(jsonPath("$").doesNotExist());
     }
 }
 
