@@ -39,6 +39,12 @@ jobs:
       run: chmod +x gradlew
     - name: Test with Gradle
       run: ./gradlew integrationTest
+      env:
+        DB_USERNAME: local_dev
+        DB_PORT: 5433
+        DB_HOST: localhost
+        DB_SCHEMAa: lurapix-dev
+        DB_PASSWORD: local_dev
 
   build:
     runs-on: ubuntu-latest
