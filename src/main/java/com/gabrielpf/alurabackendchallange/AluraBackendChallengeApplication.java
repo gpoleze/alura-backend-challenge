@@ -4,10 +4,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class AluraBackendChallangeApplication {
+public class AluraBackendChallengeApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(AluraBackendChallangeApplication.class, args);
+        SpringApplication.run(AluraBackendChallengeApplication.class, args);
     }
 
 }
