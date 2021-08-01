@@ -48,15 +48,14 @@ jobs:
         distribution: 'adopt'
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
-#    - name: Checking if docker is ok
-#    - name: Test with Gradle
-#      run: ./gradlew integrationTest
-#      env:
-#        DB_USERNAME: local_dev
-#        DB_PORT: 5432
-#        DB_HOST: localhost
-#        DB_SCHEMAa: alurapix-dev
-#        DB_PASSWORD: local_dev
+    - name: Test with Gradle
+      run: ./gradlew integrationTest
+      env:
+        DB_USERNAME: local_dev
+        DB_PORT: 5432
+        DB_HOST: localhost
+        DB_SCHEMAa: alurapix-dev
+        DB_PASSWORD: local_dev
 
   build:
     runs-on: ubuntu-latest
