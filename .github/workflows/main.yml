@@ -31,14 +31,13 @@ jobs:
     services:
       postgres:
         image: postgres
-        volumes:
-          - "$GITHUB_WORKSPACE/src/test/docker/test-data:/var/lib/postgresql/data"
         env:
           POSTGRES_DB: alurapix-dev
           POSTGRES_USER: local_dev
           POSTGRES_PASSWORD: local_dev
         ports:
           - "5432:5432"
+        options: -v "${{ github.workspace }}/src/test/docker/test-data:/var/lib/postgresql/data"
     steps:
     - uses: actions/checkout@v2
     - name: Set up JDK 16
