@@ -26,6 +26,16 @@ jobs:
         run: ./gradlew test
 
   integration_tests:
+    services:
+      postgres:
+        image: postgres
+        volumes:
+          - "src/test/docker/test-data:/var/lib/postgresql/data"
+        env:
+          POSTGRES_DB: alurapix-dev
+          POSTGRES_USER: local_dev
+          POSTGRES_PASSWORD: local_dev
+
     runs-on: ubuntu-latest
     needs: unit_test
     steps:
@@ -37,6 +47,7 @@ jobs:
         distribution: 'adopt'
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
+    - name: Checking if docker is ok
     - name: Test with Gradle
       run: ./gradlew integrationTest
       env:

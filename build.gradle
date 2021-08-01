@@ -64,9 +64,19 @@ task integrationTest(type: Test) {
         includeTags "Integration"
     }
     shouldRunAfter test
+}
+
+task integrationTestDocker(type: Test) {
+    description = 'Runs the integration tests spinning up a local DB container.'
+    group = 'verification'
+    useJUnitPlatform {
+        includeTags "Integration"
+    }
+    shouldRunAfter test
     dependsOn tasks.dockerRun
     finalizedBy tasks.dockerStop
 }
+
 
 check {
     dependsOn integrationTest
