@@ -8,6 +8,7 @@ import java.util.stream.StreamSupport;
 import org.springframework.stereotype.Service;
 
 import com.gabrielpf.alurabackendchallange.controller.form.CategoryCreateForm;
+import com.gabrielpf.alurabackendchallange.controller.form.CategoryUpdateForm;
 import com.gabrielpf.alurabackendchallange.controller.form.VideoCreateForm;
 import com.gabrielpf.alurabackendchallange.dto.CategoryDto;
 import com.gabrielpf.alurabackendchallange.exception.DataAlreadyExistsException;
@@ -53,5 +54,17 @@ public class CategoryService {
             throw new EntityCannotBeDeletedException(VideoCategory.class, "id", "There are videos still attached to this category");
 
         repository.deleteById(id);
+    }
+
+    public Optional<CategoryDto> update(UUID id, CategoryUpdateForm form) {
+        var category = repository.findById(id);
+
+        if (category.isEmpty())
+            return Optional.empty();
+
+        Category updatedCategory = form.update(category.get());
+        Category saved = repository.save(updatedCategory);
+
+        return Optional.of(new CategoryDto(saved));
     }
 }

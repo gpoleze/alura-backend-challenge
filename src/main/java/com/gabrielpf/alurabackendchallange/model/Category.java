@@ -18,6 +18,12 @@ public class Category extends EntityWithUuidId {
         this.color = color;
     }
 
+    public Category(Category other) {
+        super(other.getId());
+        this.title = other.title;
+        this.color = other.color;
+    }
+
     public String getTitle() {
         return title;
     }

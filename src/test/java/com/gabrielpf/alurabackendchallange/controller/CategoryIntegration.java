@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -41,6 +42,25 @@ public class CategoryIntegration {
 
     @Autowired
     MockMvc mockMvc;
+
+    private CategoryDto createCategory() throws Exception {
+        String expectedTitle = "I should be deleted - integration test" + UUID.randomUUID();
+        String expectedColor = "FFF";
+
+        Map<String, String> content = new HashMap<>();
+        content.put("title", expectedTitle);
+        content.put("color", expectedColor);
+        var body = gson.toJson(content).getBytes();
+
+        // Create category bo be deleted
+        var creationResponse = mockMvc.perform(post(baseUrl).content(body).contentType(MediaType.APPLICATION_JSON))
+                .andReturn().getResponse();
+        var id = JsonParser.parseString(creationResponse.getContentAsString()).getAsJsonObject().get("id").getAsString();
+        var title = JsonParser.parseString(creationResponse.getContentAsString()).getAsJsonObject().get("id").getAsString();
+        var color = JsonParser.parseString(creationResponse.getContentAsString()).getAsJsonObject().get("id").getAsString();
+
+        return new CategoryDto(UUID.fromString(id), title, color);
+    }
 
     @Test
     void listAllReturn200StatusAndListOfCategoryDto() throws Exception {
@@ -98,23 +118,25 @@ public class CategoryIntegration {
 
     @Test
     void get204StatusAndNoBodyContentWhenDeletingCategory() throws Exception {
-        String expectedTitle = "I should be deleted - integration test" + UUID.randomUUID();
-        String expectedColor = "FFF";
+        CategoryDto categoryDto = createCategory();
 
-        Map<String, String> content = new HashMap<>();
-        content.put("title", expectedTitle);
-        content.put("color", expectedColor);
-        var body = gson.toJson(content).getBytes();
-
-        // Create category bo be deleted
-        var creationResponse = mockMvc.perform(post(baseUrl).content(body).contentType(MediaType.APPLICATION_JSON))
-                .andReturn().getResponse();
-        var id = JsonParser.parseString(creationResponse.getContentAsString()).getAsJsonObject().get("id").getAsString();
-
-
-        mockMvc.perform(delete(baseUrl + id))
+        mockMvc.perform(delete(baseUrl + categoryDto.id()))
                 .andExpect(status().isNoContent())
                 .andExpect(jsonPath("$").doesNotExist());
+    }
+
+    @Test
+    void receive200StatusAndFullCategoryBackWhenUpdatingACategoryTitle() throws Exception {
+        CategoryDto categoryDto = createCategory();
+        var newTitle = "updated title";
+        CategoryDto updatedCategory = new CategoryDto(categoryDto.id(), newTitle, categoryDto.color());
+
+        mockMvc.perform(patch(baseUrl + categoryDto.id())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"" + newTitle + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(gson.toJson(categoryDto)));
     }
 }
 

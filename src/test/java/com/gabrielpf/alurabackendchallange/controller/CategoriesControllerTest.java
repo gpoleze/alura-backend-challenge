@@ -1,7 +1,11 @@
 package com.gabrielpf.alurabackendchallange.controller;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumingThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -10,6 +14,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -19,8 +24,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DisplayName;
@@ -36,7 +44,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gabrielpf.alurabackendchallange.controller.form.CategoryCreateForm;
+import com.gabrielpf.alurabackendchallange.controller.form.CategoryUpdateForm;
 import com.gabrielpf.alurabackendchallange.dto.CategoryDto;
 import com.gabrielpf.alurabackendchallange.dto.VideoCategoryDto;
 import com.gabrielpf.alurabackendchallange.exception.DataAlreadyExistsException;
@@ -50,6 +60,8 @@ import com.google.gson.Gson;
 class CategoriesControllerTest {
 
     private final String baseUrl = "/categories/";
+    private static final Gson gson = new Gson();
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
     MockMvc mockMvc;
@@ -66,7 +78,7 @@ class CategoriesControllerTest {
     }
 
     private static String parseToJson(Object o) {
-        return new Gson().toJson(o);
+        return gson.toJson(o);
     }
 
     private byte[] getBody() {
@@ -257,4 +269,76 @@ class CategoriesControllerTest {
                     .andExpect(result -> assertTrue(result.getResolvedException() instanceof EntityCannotBeDeletedException));
         }
     }
+
+    @Nested
+    @DisplayName("Update category")
+    class UpdateCategoryUnitTest {
+        private static Stream<Arguments> returnUpdatedCategoryWhenRequestIsCorrectProvider() {
+            Function<String[][], Map<String, String>> getMap = stringArray -> Stream.of(stringArray).collect(Collectors.toMap(data -> data[0], data -> data[1]));
+            return Stream.of(
+                    Arguments.of(getMap.apply(new String[][]{{"title", "newTitle"}})),
+                    Arguments.of(getMap.apply(new String[][]{{"color", "new color"}})),
+                    Arguments.of(getMap.apply(new String[][]{{"title", "newTitle"}, {"color", "new color"}}))
+            );
+        }
+
+        @ParameterizedTest
+        @MethodSource("returnUpdatedCategoryWhenRequestIsCorrectProvider")
+        void returnUpdatedCategoryWhenRequestIsCorrect(Map<String, String> items) throws Exception {
+            final var body = gson.toJson(items);
+            final CategoryUpdateForm payload = objectMapper.readValue(body, CategoryUpdateForm.class);
+            final var title = payload.title() != null ? payload.title() : "old title";
+            final var color = payload.color() != null ? payload.color() : "old color";
+            final var categoryDto = getCatogoryDto(title, color);
+
+            doReturn(Optional.of(categoryDto))
+                    .when(service)
+                    .update(eq(categoryDto.id()), any(CategoryUpdateForm.class));
+
+            var response = mockMvc.perform(
+                            patch(baseUrl + categoryDto.id()).contentType(MediaType.APPLICATION_JSON).content(body)
+                    )
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString();
+
+            CategoryDto responseCategory = objectMapper.readValue(response, CategoryDto.class);
+
+            assertNotNull(responseCategory.title());
+            assertNotNull(responseCategory.color());
+
+            assumingThat(payload.title() != null, () -> assertEquals(payload.title(), responseCategory.title()));
+            assumingThat(payload.color() != null, () -> assertEquals(payload.color(), responseCategory.color()));
+        }
+
+        @Test
+        void returnVideoWithoutAnyChangesWhenTryingToUpdateVideoAndTheGivenIdExistsButBodyIsEmpty() throws Exception {
+            CategoryDto categoryDto = getCatogoryDto();
+            doReturn(Optional.of(categoryDto)).when(service).findById(categoryDto.id());
+
+            mockMvc.perform(
+                            patch(baseUrl + categoryDto.id()).contentType(MediaType.APPLICATION_JSON).content("{}")
+                    )
+                    .andExpect(status().isOk())
+                    .andExpect(content().json(gson.toJson(categoryDto)));
+        }
+
+        @Test
+        void returnBadRequestWhenUpdatingVideoAndIdISNotValid() throws Exception {
+            mockMvc.perform(
+                            patch(baseUrl + "definitly-not-valid-uuid").contentType(MediaType.APPLICATION_JSON).content("{}")
+                    )
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        void returnBadRequestUpdatingVideoAndTheGivenIdDoesntExist() throws Exception {
+            doReturn(Optional.empty()).when(service).update(UUID.randomUUID(), new CategoryUpdateForm(null, null));
+            mockMvc.perform(patch(baseUrl + UUID.randomUUID()).contentType(MediaType.APPLICATION_JSON).content("{}"))
+                    .andExpect(status().isNotFound());
+        }
+
+    }
+
 }
