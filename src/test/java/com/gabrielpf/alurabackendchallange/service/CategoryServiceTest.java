@@ -21,6 +21,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import com.gabrielpf.alurabackendchallange.dto.CategoryDto;
 import com.gabrielpf.alurabackendchallange.model.Category;
 import com.gabrielpf.alurabackendchallange.repository.CategoryRepository;
+import com.gabrielpf.alurabackendchallange.repository.VideoCategoryRepository;
 
 
 @WebMvcTest(CategoryService.class)
@@ -31,6 +32,9 @@ class CategoryServiceTest {
 
     @MockBean
     private CategoryRepository repository;
+
+    @MockBean
+    private VideoCategoryRepository videoCategoryRepository;
 
     private static Category getCategory() {
         return new Category("title", "color");

@@ -1,8 +1,10 @@
 package com.gabrielpf.alurabackendchallange.controller;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -36,7 +38,9 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 
 import com.gabrielpf.alurabackendchallange.controller.form.CategoryCreateForm;
 import com.gabrielpf.alurabackendchallange.dto.CategoryDto;
+import com.gabrielpf.alurabackendchallange.dto.VideoCategoryDto;
 import com.gabrielpf.alurabackendchallange.exception.DataAlreadyExistsException;
+import com.gabrielpf.alurabackendchallange.exception.EntityCannotBeDeletedException;
 import com.gabrielpf.alurabackendchallange.model.Category;
 import com.gabrielpf.alurabackendchallange.service.CategoryService;
 import com.google.gson.Gson;
@@ -241,8 +245,16 @@ class CategoriesControllerTest {
             mockMvc.perform(delete(baseUrl + "i-am-clearly-not-a-valid-uuid"))
                     .andExpect(status().isBadRequest());
         }
-    }
 
-    // O que acontece se eu deletar uma categoria asocciada a um video?
-    // O que acontece se eu deletar uma video asocciado a uma categoria?
+        @Test
+        void returnBadRequestWhenTryingToDeleteACategotrieThatHasVideoAssociatedWithIt() throws Exception {
+            var id = UUID.randomUUID();
+
+            doThrow(new EntityCannotBeDeletedException(VideoCategoryDto.class, "id")).when(service).delete(id);
+
+            mockMvc.perform(delete(baseUrl + id))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(result -> assertTrue(result.getResolvedException() instanceof EntityCannotBeDeletedException));
+        }
+    }
 }

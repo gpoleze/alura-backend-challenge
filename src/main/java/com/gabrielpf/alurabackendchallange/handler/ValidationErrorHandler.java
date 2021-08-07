@@ -13,7 +13,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.gabrielpf.alurabackendchallange.dto.FormErrorDto;
 import com.gabrielpf.alurabackendchallange.exception.DataAlreadyExistsException;
+import com.gabrielpf.alurabackendchallange.exception.EntityCannotBeDeletedException;
 
 @RestControllerAdvice
 public class ValidationErrorHandler {
@@ -40,7 +42,13 @@ public class ValidationErrorHandler {
 
     @ResponseStatus(code = HttpStatus.BAD_REQUEST)
     @ExceptionHandler({DataAlreadyExistsException.class})
-    public FormErrorDto handle(DataAlreadyExistsException exception) {
-        return new FormErrorDto(exception.getFieldError().getField(),exception.getMessage());
+    public FormErrorDto handleDataAlreadyExists(DataAlreadyExistsException exception) {
+        return new FormErrorDto(exception.getFieldError().getField(), exception.getMessage());
+    }
+
+    @ResponseStatus(code = HttpStatus.BAD_REQUEST)
+    @ExceptionHandler({EntityCannotBeDeletedException.class})
+    public FormErrorDto handle(EntityCannotBeDeletedException exception) {
+        return new FormErrorDto(exception.getFieldError().getField(), exception.getMessage());
     }
 }

@@ -1,4 +1,4 @@
-package com.gabrielpf.alurabackendchallange.handler;
+package com.gabrielpf.alurabackendchallange.dto;
 
 public class FormErrorDto {
 
