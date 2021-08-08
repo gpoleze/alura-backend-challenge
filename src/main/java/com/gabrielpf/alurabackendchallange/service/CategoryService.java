@@ -11,6 +11,7 @@ import com.gabrielpf.alurabackendchallange.controller.form.CategoryCreateForm;
 import com.gabrielpf.alurabackendchallange.controller.form.CategoryUpdateForm;
 import com.gabrielpf.alurabackendchallange.controller.form.VideoCreateForm;
 import com.gabrielpf.alurabackendchallange.dto.CategoryDto;
+import com.gabrielpf.alurabackendchallange.dto.VideoDto;
 import com.gabrielpf.alurabackendchallange.exception.DataAlreadyExistsException;
 import com.gabrielpf.alurabackendchallange.exception.EntityCannotBeDeletedException;
 import com.gabrielpf.alurabackendchallange.model.Category;
@@ -49,8 +50,7 @@ public class CategoryService {
     }
 
     public void delete(UUID id) {
-        var videoCategory = videoCategoryRepository.findByCategoryId(id);
-        if (videoCategory.isPresent())
+        if (!videoCategoryRepository.findByCategoryId(id).isEmpty())
             throw new EntityCannotBeDeletedException(VideoCategory.class, "id", "There are videos still attached to this category");
 
         repository.deleteById(id);
@@ -66,5 +66,13 @@ public class CategoryService {
         Category saved = repository.save(updatedCategory);
 
         return Optional.of(new CategoryDto(saved));
+    }
+
+    public List<VideoDto> listVideosByCategoryId(UUID id) {
+        return videoCategoryRepository.findByCategoryId(id)
+                .stream()
+                .map(VideoCategory::getVideo)
+                .map(VideoDto::new)
+                .toList();
     }
 }

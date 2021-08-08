@@ -52,7 +52,7 @@ public class VideoController {
     public ResponseEntity<VideoDto> create(@Valid @RequestBody VideoCreateForm videoCreateForm, UriComponentsBuilder uriBuilder) {
         var videosVoOut = videoService.save(videoCreateForm);
 
-        final URI uri = uriBuilder.path("/videos/{id}").buildAndExpand(videosVoOut.getId()).toUri();
+        final URI uri = uriBuilder.path("/videos/{id}").buildAndExpand(videosVoOut.id()).toUri();
         return ResponseEntity.created(uri).body(videosVoOut);
     }
 

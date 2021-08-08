@@ -1,6 +1,7 @@
 package com.gabrielpf.alurabackendchallange.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumingThat;
@@ -44,14 +45,17 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gabrielpf.alurabackendchallange.controller.form.CategoryCreateForm;
 import com.gabrielpf.alurabackendchallange.controller.form.CategoryUpdateForm;
 import com.gabrielpf.alurabackendchallange.dto.CategoryDto;
 import com.gabrielpf.alurabackendchallange.dto.VideoCategoryDto;
+import com.gabrielpf.alurabackendchallange.dto.VideoDto;
 import com.gabrielpf.alurabackendchallange.exception.DataAlreadyExistsException;
 import com.gabrielpf.alurabackendchallange.exception.EntityCannotBeDeletedException;
 import com.gabrielpf.alurabackendchallange.model.Category;
+import com.gabrielpf.alurabackendchallange.model.Video;
 import com.gabrielpf.alurabackendchallange.service.CategoryService;
 import com.google.gson.Gson;
 
@@ -150,7 +154,7 @@ class CategoriesControllerTest {
             mockMvc
                     .perform(get(baseUrl + badId))
                     .andExpect(status().isNotFound())
-                    .andExpect(content().string("Not Found"));
+                    .andExpect(content().json("{\"field\":\"id\",\"error\":\"Item Not Found\"}"));
         }
 
         @Test
@@ -341,4 +345,69 @@ class CategoriesControllerTest {
 
     }
 
+    @Nested
+    @DisplayName("get videos in a category")
+    class GetVideosAndCategoriesRealtion {
+        private String buildUrl(String id) {return baseUrl + id + "/videos";}
+
+        private String buildUrl(UUID id) {return buildUrl(id.toString());}
+
+        @Test
+        void failIfIdNotValid() throws Exception {
+            mockMvc.perform(get(buildUrl("clearly-not-avalid-uuid")))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().string(""));
+
+            verify(service, times(0)).findById(any());
+            verify(service, times(0)).listVideosByCategoryId(any());
+        }
+
+        @Test
+        void itemNotFoundErrorIfNoCategoryWithGivenId() throws Exception {
+            var badId = UUID.randomUUID();
+
+            doReturn(Optional.empty()).when(service).findById(badId);
+
+            mockMvc.perform(get(buildUrl(badId)))
+                    .andExpect(status().isNotFound())
+                    .andExpect(content().json("{\"field\":\"id\",\"error\":\"Item Not Found\"}"));
+
+            verify(service, times(1)).findById(badId);
+            verify(service, times(0)).listVideosByCategoryId(badId);
+        }
+
+        @Test
+        void emptyListIfNoVideoAssociatedWithCategory() throws Exception {
+            final var id = UUID.randomUUID();
+
+            doReturn(Optional.of(getCatogoryDto())).when(service).findById(id);
+            doReturn(Collections.emptyList()).when(service).listVideosByCategoryId(id);
+
+            mockMvc.perform(get(buildUrl(id)))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(content().json("[]"));
+
+            verify(service, times(1)).findById(id);
+            verify(service, times(1)).listVideosByCategoryId(id);
+        }
+
+        @Test
+        void listWhenVideoAssociatedWithCategory() throws Exception {
+            var videoDto = new VideoDto(new Video("title", "description", "url"));
+
+            doReturn(Optional.of(getCatogoryDto())).when(service).findById(videoDto.id());
+            doReturn(List.of(videoDto)).when(service).listVideosByCategoryId(videoDto.id());
+
+            final var mvcResult = mockMvc.perform(get(buildUrl(videoDto.id())))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andReturn();
+
+            List<VideoDto> content = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), new TypeReference<>() {});
+
+            assertFalse(content.isEmpty());
+            assertEquals(videoDto, content.get(0));
+        }
+    }
 }

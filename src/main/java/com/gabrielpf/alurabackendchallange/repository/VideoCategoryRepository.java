@@ -1,5 +1,6 @@
 package com.gabrielpf.alurabackendchallange.repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -10,5 +11,5 @@ import com.gabrielpf.alurabackendchallange.model.VideoCategory;
 
 @Repository
 public interface VideoCategoryRepository extends CrudRepository<VideoCategory, UUID> {
-    Optional<VideoCategory> findByCategoryId(UUID id);
+    List<VideoCategory> findByCategoryId(UUID id);
 }

@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -26,8 +27,13 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
+import com.fasterxml.jackson.core.ObjectCodec;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gabrielpf.alurabackendchallange.dto.CategoryDto;
+import com.gabrielpf.alurabackendchallange.dto.VideoDto;
 import com.gabrielpf.alurabackendchallange.model.Category;
 import com.google.gson.Gson;
 import com.google.gson.JsonParser;
@@ -39,9 +45,11 @@ public class CategoryIntegration {
 
     private final String baseUrl = "/categories/";
     private final Gson gson = new Gson();
+    private final String generalCategoryId = "0df591cf-4226-4e3d-a31a-49c8b31e21d0";
 
     @Autowired
     MockMvc mockMvc;
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     private CategoryDto createCategory() throws Exception {
         String expectedTitle = "I should be deleted - integration test" + UUID.randomUUID();
@@ -77,7 +85,7 @@ public class CategoryIntegration {
     @Test
     void getOneReturn200StatusAndGeneralCategoryDto() throws Exception {
         Category general = new Category("GENERAL", "000000");
-        general.setId(UUID.fromString("0df591cf-4226-4e3d-a31a-49c8b31e21d0"));
+        general.setId(UUID.fromString(generalCategoryId));
 
         CategoryDto expected = new CategoryDto(general);
 
@@ -137,6 +145,15 @@ public class CategoryIntegration {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(gson.toJson(categoryDto)));
+    }
+
+    @Test
+    void receive200StatusAndAListOfVideoskWhenListingByCategory() throws Exception {
+        mockMvc.perform(get(baseUrl + generalCategoryId + "/videos"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(result -> assertNotNull(objectMapper.readValue("", new TypeReference<List<VideoDto>>() {})))
+                .andExpect(result -> assertFalse(objectMapper.readValue("", new TypeReference<List<VideoDto>>() {}).isEmpty()));
     }
 }
 

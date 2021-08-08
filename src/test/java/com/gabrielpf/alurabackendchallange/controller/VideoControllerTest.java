@@ -44,6 +44,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gabrielpf.alurabackendchallange.controller.form.VideoCreateForm;
 import com.gabrielpf.alurabackendchallange.controller.form.VideoUpdateForm;
 import com.gabrielpf.alurabackendchallange.dto.VideoDto;
@@ -63,6 +64,7 @@ class VideoControllerTest {
     @MockBean
     private VideoService videoService;
     private final Gson gson = new Gson();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private byte[] getBody(String title, String description, String url) {
         Map<String, String> content = new HashMap<>();
@@ -173,7 +175,7 @@ class VideoControllerTest {
                     .andDo(print())
                     .andExpect(status().isCreated())
                     .andExpect(content().json(gson.toJson(videoVoOut)))
-                    .andExpect(redirectedUrl("http://localhost" + baseUrl + videoVoOut.getId()));
+                    .andExpect(redirectedUrl("http://localhost" + baseUrl + videoVoOut.id()));
         }
 
         private static Stream<Arguments> providerReturnBadRequestWhenMissingArgument() {
@@ -236,9 +238,9 @@ class VideoControllerTest {
         void deleteVideoWhenItemExistsInTheDatabase() throws Exception {
             VideoDto videoVoOut = getVideoVoOut();
 
-            doNothing().when(videoService).delete(videoVoOut.getId());
+            doNothing().when(videoService).delete(videoVoOut.id());
 
-            mockMvc.perform(delete(baseUrl + videoVoOut.getId()))
+            mockMvc.perform(delete(baseUrl + videoVoOut.id()))
                     .andExpect(status().isNoContent());
         }
 
@@ -284,35 +286,35 @@ class VideoControllerTest {
 
             doReturn(Optional.of(videoVoOut))
                     .when(videoService)
-                    .update(eq(videoVoOut.getId()), any(VideoUpdateForm.class));
+                    .update(eq(videoVoOut.id()), any(VideoUpdateForm.class));
 
             var response = mockMvc.perform(
-                            patch(baseUrl + videoVoOut.getId()).contentType(MediaType.APPLICATION_JSON).content(body)
+                            patch(baseUrl + videoVoOut.id()).contentType(MediaType.APPLICATION_JSON).content(body)
                     )
                     .andExpect(status().isOk())
                     .andReturn()
                     .getResponse()
                     .getContentAsString();
 
-            VideoDto responseVideo = gson.fromJson(response, VideoDto.class);
+            VideoDto responseVideo = objectMapper.readValue(response, VideoDto.class);
 
-            assertNotNull(responseVideo.getTitle());
-            assertNotNull(responseVideo.getDescription());
-            assertNotNull(responseVideo.getUrl());
+            assertNotNull(responseVideo.title());
+            assertNotNull(responseVideo.description());
+            assertNotNull(responseVideo.url());
 
-            assumingThat(payload.getTitle() != null, () -> assertEquals(payload.getTitle(), responseVideo.getTitle()));
-            assumingThat(payload.getDescription() != null, () -> assertEquals(payload.getDescription(), responseVideo.getDescription()));
-            assumingThat(payload.getUrl() != null, () -> assertEquals(payload.getUrl(), responseVideo.getUrl()));
+            assumingThat(payload.getTitle() != null, () -> assertEquals(payload.getTitle(), responseVideo.title()));
+            assumingThat(payload.getDescription() != null, () -> assertEquals(payload.getDescription(), responseVideo.description()));
+            assumingThat(payload.getUrl() != null, () -> assertEquals(payload.getUrl(), responseVideo.url()));
 
         }
 
         @Test
         void returnVideoWithoutAnyChangesWhenTryingToUpdateVideoAndTheGivenIdExistsButBodyIsEmpty() throws Exception {
             VideoDto videoVoOut = getVideoVoOut();
-            doReturn(Optional.of(videoVoOut)).when(videoService).findById(videoVoOut.getId());
+            doReturn(Optional.of(videoVoOut)).when(videoService).findById(videoVoOut.id());
 
             mockMvc.perform(
-                            patch(baseUrl + videoVoOut.getId()).contentType(MediaType.APPLICATION_JSON).content("{}")
+                            patch(baseUrl + videoVoOut.id()).contentType(MediaType.APPLICATION_JSON).content("{}")
                     )
                     .andExpect(status().isOk())
                     .andExpect(content().json(gson.toJson(videoVoOut)));

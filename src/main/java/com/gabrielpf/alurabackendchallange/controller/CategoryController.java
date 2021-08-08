@@ -7,7 +7,6 @@ import java.util.UUID;
 
 import javax.validation.Valid;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -23,6 +22,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.gabrielpf.alurabackendchallange.controller.form.CategoryCreateForm;
 import com.gabrielpf.alurabackendchallange.controller.form.CategoryUpdateForm;
 import com.gabrielpf.alurabackendchallange.dto.CategoryDto;
+import com.gabrielpf.alurabackendchallange.dto.VideoDto;
+import com.gabrielpf.alurabackendchallange.exception.EntityDoesNotExistException;
 import com.gabrielpf.alurabackendchallange.service.CategoryService;
 
 @RestController
@@ -39,13 +40,13 @@ public class CategoryController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Object> getOne(@PathVariable("id") UUID id) {
+    public ResponseEntity<CategoryDto> getOne(@PathVariable("id") UUID id) {
         Optional<CategoryDto> optionalCategoryDto = service.findById(id);
 
 
         return optionalCategoryDto
-                .<ResponseEntity<Object>>map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not Found"));
+                .map(ResponseEntity::ok)
+                .orElseThrow(EntityDoesNotExistException::new);
     }
 
     @PostMapping
@@ -63,12 +64,19 @@ public class CategoryController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity update(@PathVariable UUID id, @Valid @RequestBody CategoryUpdateForm form) {
+    public ResponseEntity<CategoryDto> update(@PathVariable UUID id, @Valid @RequestBody CategoryUpdateForm form) {
         if (form.hasAllFieldsBlank())
             return getOne(id);
 
         return service.update(id, form)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .orElseThrow(EntityDoesNotExistException::new);
+    }
+
+    @GetMapping("/{id}/videos")
+    public ResponseEntity<List<VideoDto>> listAllVideos(@PathVariable UUID id) {
+        return service.findById(id)
+                .map(categoryDto -> ResponseEntity.ok(service.listVideosByCategoryId(id)))
+                .orElseThrow(EntityDoesNotExistException::new);
     }
 }
