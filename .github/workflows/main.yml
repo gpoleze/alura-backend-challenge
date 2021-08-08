@@ -44,7 +44,7 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Test with Gradle
-      run: ./gradlew integrationTestDocker
+      run: ./gradlew integrationTestDocker -i
 
   build:
     runs-on: ubuntu-latest
