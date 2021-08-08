@@ -49,6 +49,7 @@ dockerRun {
     volumes 'src/test/docker/test-data': '/var/lib/postgresql/data'
     ports "${dbEnvVars.port}:5432"
     daemonize true
+    arguments '--hostname=host'
 
     env('POSTGRES_DB': "${dbEnvVars.schema}",
             'POSTGRES_USER': "${dbEnvVars.username}",
