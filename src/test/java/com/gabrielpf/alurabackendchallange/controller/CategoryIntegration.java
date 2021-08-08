@@ -64,8 +64,8 @@ public class CategoryIntegration {
         var creationResponse = mockMvc.perform(post(baseUrl).content(body).contentType(MediaType.APPLICATION_JSON))
                 .andReturn().getResponse();
         var id = JsonParser.parseString(creationResponse.getContentAsString()).getAsJsonObject().get("id").getAsString();
-        var title = JsonParser.parseString(creationResponse.getContentAsString()).getAsJsonObject().get("id").getAsString();
-        var color = JsonParser.parseString(creationResponse.getContentAsString()).getAsJsonObject().get("id").getAsString();
+        var title = JsonParser.parseString(creationResponse.getContentAsString()).getAsJsonObject().get("title").getAsString();
+        var color = JsonParser.parseString(creationResponse.getContentAsString()).getAsJsonObject().get("color").getAsString();
 
         return new CategoryDto(UUID.fromString(id), title, color);
     }
@@ -144,16 +144,16 @@ public class CategoryIntegration {
                         .content("{\"title\":\"" + newTitle + "\"}"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(content().json(gson.toJson(categoryDto)));
+                .andExpect(content().json(objectMapper.writeValueAsString(updatedCategory)));
     }
 
     @Test
-    void receive200StatusAndAListOfVideoskWhenListingByCategory() throws Exception {
+    void receive200StatusAndAListOfVideosWhenListingByCategory() throws Exception {
         mockMvc.perform(get(baseUrl + generalCategoryId + "/videos"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(result -> assertNotNull(objectMapper.readValue("", new TypeReference<List<VideoDto>>() {})))
-                .andExpect(result -> assertFalse(objectMapper.readValue("", new TypeReference<List<VideoDto>>() {}).isEmpty()));
+                .andExpect(result -> assertNotNull(objectMapper.readValue(result.getResponse().getContentAsString(), new TypeReference<List<VideoDto>>() {})))
+                .andExpect(result -> assertFalse(objectMapper.readValue(result.getResponse().getContentAsString(), new TypeReference<List<VideoDto>>() {}).isEmpty()));
     }
 }
 
