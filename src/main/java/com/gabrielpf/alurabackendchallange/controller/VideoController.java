@@ -2,14 +2,13 @@ package com.gabrielpf.alurabackendchallange.controller;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import javax.validation.Valid;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -39,13 +38,10 @@ public class VideoController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity getOne(@PathVariable("id") UUID id) {
-        Optional<VideoDto> voOut = videoService.findById(id);
-
-        if (voOut.isPresent())
-            return ResponseEntity.ok(voOut.get());
-
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not Found");
+    public ResponseEntity<VideoDto> getOne(@PathVariable("id") UUID id) {
+        return videoService.findById(id)
+                .map(ResponseEntity::ok)
+                .orElseThrow(EntityDoesNotExistException::new);
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -57,21 +53,20 @@ public class VideoController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity delete(@PathVariable UUID id) {
+    public ResponseEntity<VideoDto> delete(@PathVariable UUID id) {
         videoService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity patchVideo(@PathVariable UUID id, @Valid @RequestBody VideoUpdateForm videoUpdateForm) {
+    public ResponseEntity<VideoDto> patchVideo(@PathVariable UUID id, @Valid @RequestBody VideoUpdateForm videoUpdateForm) {
         if (videoUpdateForm.hasAllFieldsBlank())
             return getOne(id);
 
-
-        Optional<VideoDto> optionalVideosVoOut = videoService.update(id, videoUpdateForm);
-        if (optionalVideosVoOut.isPresent())
-            return ResponseEntity.ok(optionalVideosVoOut.get());
-        return ResponseEntity.noContent().build();
+        return videoService
+                .update(id, videoUpdateForm)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
 }
