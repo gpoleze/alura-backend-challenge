@@ -22,6 +22,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -29,6 +31,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -51,6 +54,7 @@ import com.gabrielpf.alurabackendchallange.dto.VideoDto;
 import com.gabrielpf.alurabackendchallange.exception.DataAlreadyExistsException;
 import com.gabrielpf.alurabackendchallange.model.Video;
 import com.gabrielpf.alurabackendchallange.service.VideoService;
+import com.gabrielpf.alurabackendchallange.service.specification.VideoSpecification;
 import com.google.gson.Gson;
 
 @ExtendWith(SpringExtension.class)
@@ -74,32 +78,60 @@ class VideoControllerTest {
         return gson.toJson(content).getBytes();
     }
 
-    private VideoCreateForm getVideoVoIn() {
+    private VideoCreateForm getVideoCreateForm() {
         return new VideoCreateForm("my description", "my tile", "example.com/video");
     }
 
-    private VideoDto getVideoVoOut() {
-        return new VideoDto(getVideoVoIn().convert());
+    private VideoDto getVideoDto() {
+        return new VideoDto(UUID.randomUUID(), "my tile", "my description", "example.com/video");
+    }
+
+    private VideoDto getVideoDto(String title, String description, String url) {
+        return new VideoDto(UUID.randomUUID(), title, description, url);
     }
 
     @Nested
     @DisplayName("findAll method")
     class FindAllUnitTest {
-        @Test
-        void listAllVideos() throws Exception {
-            var videosVoOut = Stream.of(
-                            new Video(new VideoCreateForm("desc1", "title1", "url1")),
-                            new Video(new VideoCreateForm("desc2", "title2", "url2"))
-                    )
-                    .map(VideoDto::new)
+        private static final List<VideoDto> videoDtoList =
+                List.of(
+                        new VideoDto(UUID.randomUUID(), "my first video", "was very nice", "youtube.com/my-fisrt-video"),
+                        new VideoDto(UUID.randomUUID(), "Reaction", "Trying to cook past", "youtube.com/reaction"),
+                        new VideoDto(UUID.randomUUID(), "John Doe videocast", "This week interviewing someone you do not know", "vimeo.com/john-doe-videocast"),
+                        new VideoDto(UUID.randomUUID(), "See what happens", "The prank that got wrong", "youtube.com/see-what-happens"),
+                        new VideoDto(UUID.randomUUID(), "The video of all videos", "The video to rule them all", "youtube.com/the-video-of-all-videos")
+                );
+
+        private static Stream<Arguments> returnVideosWhenSearchMatchesProvider() {
+            Function<String, List<VideoDto>> filterVideoDtoList = search -> videoDtoList
+                    .stream()
+                    .filter(video -> video.title().toLowerCase().contains(search.toLowerCase()))
                     .toList();
 
-            when(videoService.findAll()).thenReturn(videosVoOut);
+            return Stream.of(
+                    Arguments.of(Optional.of("video"), filterVideoDtoList.apply("video")),
+                    Arguments.of(Optional.of("nas"), filterVideoDtoList.apply("nas")),
+                    Arguments.of(Optional.of("reaction"), filterVideoDtoList.apply("reaction")),
+                    Arguments.of(Optional.of("John Doe"), filterVideoDtoList.apply("John Doe")),
+                    Arguments.of(Optional.empty(), videoDtoList)
 
-            mockMvc
-                    .perform(get(baseUrl))
+            );
+        }
+
+
+        @ParameterizedTest
+        @MethodSource("returnVideosWhenSearchMatchesProvider")
+        void returnVideosWhenSearchMatches(Optional<String> searchItem, List<VideoDto> videosDto) throws Exception {
+            doReturn(videosDto).when(videoService).findAll(VideoSpecification.likeTitle(searchItem));
+
+            final var request = searchItem
+                    .map(item -> get(baseUrl).queryParam("search", item))
+                    .orElse(get(baseUrl));
+
+            mockMvc.perform(request)
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$", hasSize(2)))
+                    .andExpect(jsonPath("$", hasSize(videosDto.size())))
+                    .andExpect(content().json(objectMapper.writeValueAsString(videosDto)))
                     .andDo(print());
         }
     }
@@ -134,7 +166,7 @@ class VideoControllerTest {
             mockMvc
                     .perform(get(baseUrl + badId))
                     .andExpect(status().isNotFound())
-                    .andExpect(content().string("Not Found"));
+                    .andExpect(content().string("{\"field\":\"id\",\"error\":\"Item Not Found\"}"));
         }
 
         @Test
@@ -236,7 +268,7 @@ class VideoControllerTest {
     class DeleteVideoUnitTest {
         @Test
         void deleteVideoWhenItemExistsInTheDatabase() throws Exception {
-            VideoDto videoVoOut = getVideoVoOut();
+            VideoDto videoVoOut = getVideoDto();
 
             doNothing().when(videoService).delete(videoVoOut.id());
 
@@ -280,7 +312,7 @@ class VideoControllerTest {
         void returnUpdatedVideoWhenRequestIsCorrect(Map<String, String> items) throws Exception {
             String body = gson.toJson(items);
             VideoUpdateForm payload = gson.fromJson(body, VideoUpdateForm.class);
-            Video converted = getVideoVoIn().convert();
+            Video converted = getVideoCreateForm().convert();
             Video updated = payload.update(converted);
             VideoDto videoVoOut = new VideoDto(updated);
 
@@ -310,7 +342,7 @@ class VideoControllerTest {
 
         @Test
         void returnVideoWithoutAnyChangesWhenTryingToUpdateVideoAndTheGivenIdExistsButBodyIsEmpty() throws Exception {
-            VideoDto videoVoOut = getVideoVoOut();
+            VideoDto videoVoOut = getVideoDto();
             doReturn(Optional.of(videoVoOut)).when(videoService).findById(videoVoOut.id());
 
             mockMvc.perform(

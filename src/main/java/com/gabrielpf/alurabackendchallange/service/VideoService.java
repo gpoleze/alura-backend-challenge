@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
 
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.gabrielpf.alurabackendchallange.controller.form.VideoCreateForm;
@@ -13,6 +14,7 @@ import com.gabrielpf.alurabackendchallange.dto.VideoDto;
 import com.gabrielpf.alurabackendchallange.exception.DataAlreadyExistsException;
 import com.gabrielpf.alurabackendchallange.model.Video;
 import com.gabrielpf.alurabackendchallange.repository.VideoRepository;
+import com.gabrielpf.alurabackendchallange.service.specification.VideoSpecification;
 
 @Service
 public class VideoService {
@@ -30,8 +32,9 @@ public class VideoService {
         return new VideoDto(savedVideo);
     }
 
-    public List<VideoDto> findAll() {
-        return StreamSupport.stream(videoRepo.findAll().spliterator(), true)
+    public List<VideoDto> findAll(Specification<Video> videoSpecification) {
+        return videoRepo.findAll(videoSpecification)
+                .stream()
                 .map(VideoDto::new)
                 .toList();
     }

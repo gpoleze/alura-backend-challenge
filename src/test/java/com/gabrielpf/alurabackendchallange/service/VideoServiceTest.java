@@ -9,35 +9,23 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.OverrideAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
-import org.springframework.boot.test.autoconfigure.filter.TypeExcludeFilters;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureWebMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 //import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTestContextBootstrapper;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTypeExcludeFilter;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.BootstrapWith;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.gabrielpf.alurabackendchallange.controller.form.VideoCreateForm;
 import com.gabrielpf.alurabackendchallange.controller.form.VideoUpdateForm;
@@ -45,6 +33,7 @@ import com.gabrielpf.alurabackendchallange.dto.VideoDto;
 import com.gabrielpf.alurabackendchallange.exception.DataAlreadyExistsException;
 import com.gabrielpf.alurabackendchallange.model.Video;
 import com.gabrielpf.alurabackendchallange.repository.VideoRepository;
+import com.gabrielpf.alurabackendchallange.service.specification.VideoSpecification;
 
 @WebMvcTest(VideoService.class)
 class VideoServiceTest {
@@ -75,6 +64,15 @@ class VideoServiceTest {
         return new VideoDto(getVideoCreateForm(title).convert());
     }
 
+    private static final List<Video> videosList =
+            List.of(
+                    new Video("my first video", "was very nice", "youtube.com/my-fisrt-video"),
+                    new Video("Reaction", "Trying to cook past", "youtube.com/reaction"),
+                    new Video("John Doe videocast", "This week interviewing someone you do not know", "vimeo.com/john-doe-videocast"),
+                    new Video("See what happens", "The prank that got wrong", "youtube.com/see-what-happens"),
+                    new Video("The video of all videos", "The video to rule them all", "youtube.com/the-video-of-all-videos")
+            );
+
     @Test
     void deleteMethodReturnsVoidWhenThereIsAMatchingId() {
         Video video = getVideoCreateForm().convert();
@@ -104,15 +102,43 @@ class VideoServiceTest {
 
     @Test
     void findAllMethodReturnsAListOfVideoDtos() {
-        List<Video> repositoryReturn = Arrays.asList(getVideoCreateForm("title1").convert(), getVideoCreateForm("title2").convert());
-        List<VideoDto> expected = repositoryReturn.stream().map(VideoDto::new).toList();
+        List<VideoDto> expected = videosList.stream().map(VideoDto::new).toList();
 
+        doReturn(videosList).when(repository).findAll(VideoSpecification.likeTitle(Optional.empty()));
 
-        doReturn(repositoryReturn).when(repository).findAll();
+        List<VideoDto> actual = service.findAll(VideoSpecification.likeTitle(Optional.empty()));
 
-        List<VideoDto> actual = service.findAll();
+        verify(repository, times(1)).findAll(VideoSpecification.likeTitle(Optional.empty()));
 
-        verify(repository, times(1)).findAll();
+        assertEquals(expected, actual);
+    }
+
+    private static Stream<Arguments> findAllMethodReturnsAListOfVideoDtosMatchingCriteriaProvider() {
+        Function<String, List<Video>> filterVideoDtoList = search -> videosList
+                .stream()
+                .filter(video -> video.getTitle().toLowerCase().contains(search.toLowerCase()))
+                .toList();
+
+        return Stream.of(
+                Arguments.of(Optional.of("video"), filterVideoDtoList.apply("video")),
+                Arguments.of(Optional.of("nas"), filterVideoDtoList.apply("nas")),
+                Arguments.of(Optional.of("reaction"), filterVideoDtoList.apply("reaction")),
+                Arguments.of(Optional.of("John Doe"), filterVideoDtoList.apply("John Doe")),
+                Arguments.of(Optional.empty(), videosList)
+
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("findAllMethodReturnsAListOfVideoDtosMatchingCriteriaProvider")
+    void findAllMethodReturnsAListOfVideoDtosMatchingCriteria(Optional<String> searchItem, List<Video> videos) {
+        List<VideoDto> expected = videos.stream().map(VideoDto::new).toList();
+
+        doReturn(videos).when(repository).findAll(VideoSpecification.likeTitle(searchItem));
+
+        List<VideoDto> actual = service.findAll(VideoSpecification.likeTitle(searchItem));
+
+        verify(repository, times(1)).findAll(any(VideoSpecification.class));
 
         assertEquals(expected, actual);
     }
@@ -121,9 +147,9 @@ class VideoServiceTest {
     void findAllMethodReturnsAnEmptyListIfNoVideosExist() {
         doReturn(Collections.emptyList()).when(repository).findAll();
 
-        List<VideoDto> actual = service.findAll();
+        List<VideoDto> actual = service.findAll(VideoSpecification.likeTitle(Optional.empty()));
 
-        verify(repository, times(1)).findAll();
+        verify(repository, times(1)).findAll(VideoSpecification.likeTitle(Optional.empty()));
 
         assertTrue(actual.isEmpty());
     }
